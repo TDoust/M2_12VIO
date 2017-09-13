@@ -1,0 +1,26 @@
+<<<<<<< HEAD
+#######################################
+# Syntax Coloring Map For M2_12VIO
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+Init_12VIO				KEYWORD2
+Setpin_12VIO			KEYWORD2
+Load_Amps               KEYWORD2
+Supply_Volts            KEYWORD2
+Read_12VIO              KEYWORD2
+Getpin_12VIO			KEYWORD2
+Temperature             KEYWORD2
+#######################################
+# Instances (KEYWORD2)
+#######################################
+M2_12VIO::              KEYWORD2
+#######################################
+# Constants (LITERAL1)
+#######################################
