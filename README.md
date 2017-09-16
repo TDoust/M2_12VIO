@@ -26,20 +26,20 @@
 
 *	Setpin_12VIO(3, ON)	turn output pin 3 ON
 *	Setpin_12VIO(3, ON, SOURCE)
-sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
-after setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the output OFF or ON
+sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***".
+After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the output OFF or ON
 
 *	Setpin_12VIO(4, OFF)	turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)
-sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
-after setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
+sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***".
+After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
 *	Setpin_12VIO(1, ON, PWM, 75)
-set pin 3 to PWM with a 75% duty cycle & start the PWM
-after setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or ON restarting the PWM
+set pin 3 to PWM with a 75% duty cycle & start the PWM.
+After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or ON restarting the PWM
 
 *	Load_Amps()
-returns the total load currently being drawn from the M2 +12io line
+returns the total load currently being drawn from the M2 +12io line.
 if there has been a overload condition calling Load_Amps() will return the AMPS drawn at the time of the overload condition
 
 *	Supply_Volts()	returns the battery volts of the vehicle the M2 is plugged into
@@ -52,7 +52,7 @@ read the analogue pin as a digital input to enable the analogue input to be used
 
  Private Functions
  *	Enable_12VIO_Monitor(ON)
- Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together
+ Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together.
  (i.e. this can be considered as a Master ON/OFF switch)
 
 
