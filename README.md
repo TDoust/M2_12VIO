@@ -24,22 +24,31 @@
 * Functions:
 *	Init_12VIO()				// Initialise the 12VIO & the M2 I/O power supply current monitoring
 *	Setpin_12VIO(3, ON)			// turn output pin 3 ON
-*	Setpin_12VIO(3, ON, SOURCE)	// sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
-								// after setting the output pin to source or sink then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
+*	Setpin_12VIO(3, ON, SOURCE)
+// sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
+// after setting the output pin to source or sink then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
+
 *	Setpin_12VIO(4, OFF)		// turn output pin 4 OFF
-*	Setpin_12VIO(4, ON, SINK)	// sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
+*	Setpin_12VIO(4, ON, SINK)
+// sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
 
 *	Setpin_12VIO(3, PWM, 75)	// set pin 3 to PWM with a 75% duty cycle
-*	Load_Amps()					// returns the total load currently being drawn from the M2 +12io line
-								// if there has been a overload condition Load_Amps will return the load drawn at the time of the overload condition
+*	Load_Amps()
+// returns the total load currently being drawn from the M2 +12io line
+// if there has been a overload condition Load_Amps will return the load drawn at the time of the overload condition
+
 *	Supply_Volts()				// returns the battery volts of the vehicle the M2 is plugged into
 *	Read_12VIO(IO_Pin)			// reads the Analogue pin & returns the scaled value as mVolts 
-*	Getpin_12VIO(IO_Pin)		// read the analogue pin as a digital input to enable the analogue input to be used as a button input
+*	Getpin_12VIO(IO_Pin)
+// read the analogue pin as a digital input to enable the analogue input to be used as a button input
+
 *	Temperature()				// returns the internal temperature of the SAM DUE processor chip
 *
 
  Private Functions
- *	Enable_12VIO_Monitor(ON)	// Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together (i.e. this can be considered as a Master ON/OFF switch)
+ *	Enable_12VIO_Monitor(ON)
+ // Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together
+ (i.e. this can be considered as a Master ON/OFF switch)
 
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
