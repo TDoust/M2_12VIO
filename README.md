@@ -34,18 +34,24 @@ After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the o
 sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***".
 After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
-*	Setpin_12VIO(1, ON, PWM, 75)
-set pin 3 to PWM with a 75% duty cycle & start the PWM.
+*	Setpin_12VIO(1, ON, PWM, Hz)
+set pin 1 ON as a PWM output with a 75% duty cycle & start the PWM.
 After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or ON restarting the PWM
 
 *	Load_Amps()
 returns the total load currently being drawn from the M2 +12io line.
 if there has been a overload condition calling Load_Amps() will return the AMPS drawn at the time of the overload condition
 
-*	Supply_Volts()	returns the battery volts of the vehicle the M2 is plugged into
-*	Read_12VIO(IO_Pin)	reads the Analogue pin & returns the scaled value as mVolts 
-*	Getpin_12VIO(IO_Pin)
-read the analogue pin as a digital input to enable the analogue input to be used as a button input
+*	Supply_Volts()
+returns the battery volts of the vehicle the M2 is plugged into
+
+*	Read_12VIO(IO_Pin)
+reads the Analogue pin & returns the scaled value as mVolts
+
+*	InitButton_12VIO(IO_Pin)
+Initialise the Analog_Pin as a pseduo digital input
+*	GetButton_12VIO(IO_Pin)
+reads the analogue pin as a button if ON or OFF
 
 *	Temperature()	returns the internal temperature of the SAM DUE processor chip
 *
