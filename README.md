@@ -34,9 +34,9 @@ After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the o
 sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***".
 After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
-*	Setpin_12VIO(1, ON, PWM, Hz)
-set pin 1 ON as a PWM output with a 75% duty cycle & start the PWM.
-After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or ON restarting the PWM
+*	Setpin_12VIO(1, ON, SOURCE, PWM, 1)
+set pin 1 ON as SOURCE & PWM output with a 1Hz duty cycle & start the PWM.
+After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or (ON = restarting the PWM if configured as PWM)
 
 *	Load_Amps()
 returns the total load currently being drawn from the M2 +12io line.
