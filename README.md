@@ -37,12 +37,12 @@ After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the o
 
 *	Setpin_12VIO(4, OFF)	turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)
-sets output 4 to SINK 12 volts & turns output pin ON.
+sets output 4 to SINK 12 volts & turns the output pin ON.
 After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
 *	Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 50)
-set pin 1 ON as SOURCE & PWM one output with a 50% duty cycle & start the PWM.
-After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or (ON = restarting the PWM if configured as PWM with the previous duty cycle)
+set pin 1 ON as SOURCE & PWM the output with a 50% duty cycle & start the PWM.
+After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or On. (ON = restarting the PWM if configured as PWM with the previous duty cycle)
 
 *	Load_Amps()
 returns the total load currently being drawn from the M2 +12io line.
