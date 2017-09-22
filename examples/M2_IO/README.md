@@ -45,12 +45,12 @@ The functions
 
 *	Setpin_12VIO(3, ON)	turn output pin 3 ON
 *	Setpin_12VIO(3, ON, SOURCE)
-sets output 3 to SOURCE 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***".
+sets output 3 to SOURCE 12 volts & turns output pin ON.
 After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the output OFF or ON
 
 *	Setpin_12VIO(4, OFF)	turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)
-sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***".
+sets output 4 to SINK 12 volts & turns output pin ON.
 After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
 *	Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 50)
