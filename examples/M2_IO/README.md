@@ -21,7 +21,7 @@ The example file M2_IO.ino & M2_IO.h demonstrates how to use the functions from 
 
 The functions
 	Supply_Volts(), Read_12VIO(IO_Pin) return uncalibarated milliVolt values & for most users these values will be close enough.
-	The reason for needing to carry out calibrartion is due to vaiances in resistor values & other component tolerances.
+	The reason for needing to carry out calibrartion is due to variances in resistor values & other component tolerances.
 	Should the end user require more accurate values then calibration will be required.
 	The calibration is carried out by appling a known value say 12VDC to the input & measure this with a good quality voltmeter
 	& comparing this value to the value output from the M2 via the SerialUSB.print() function to the console. Once these 2 values are obtained
