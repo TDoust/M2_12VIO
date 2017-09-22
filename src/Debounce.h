@@ -1,5 +1,8 @@
 #ifndef _Debounce_h
 #define _Debounce_h
+/*
+Not required as the functions have been moved to M2_IO.h in the examples
+Included here for for possible use by the end user later
 
 #include <stdint.h>
 
@@ -18,5 +21,5 @@ typedef struct{
 	// will quickly become a bigger number than can be stored in an int.
 	volatile uint32_t lastDebounceTime = 0;  // the last time the output pin was toggled
 }debounce_t;
-
+*/
 #endif //_Debounce_h

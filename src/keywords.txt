@@ -10,17 +10,21 @@
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-Init_12VIO				KEYWORD2
-Setpin_12VIO			KEYWORD2
-Load_Amps               KEYWORD2
-Supply_Volts            KEYWORD2
-Read_12VIO              KEYWORD2
-Getpin_12VIO			KEYWORD2
-Temperature             KEYWORD2
+Init_12VIO()	 KEYWORD2
+Reset_Current_Limit()	KEYWORD2
+Load_Amps()	 KEYWORD2
+Supply_Volts()	 KEYWORD2
+Read_12VIO(IO_Pin)	 KEYWORD2
+Setpin_12VIO(IO_Pin, Pin_Mode)	 KEYWORD2
+Setpin_12VIO(IO_Pin, Pin_Mode, Source_Mode)	 KEYWORD2
+Setpin_12VIO(IO_Pin, Pin_Mode, Source_Mode, Pwm_Mode, Hz)	 KEYWORD2
+InitButton_12VIO(uint32_t IO_Pin)	 KEYWORD2
+GetButton_12VIO(uint32_t IO_Pin)	 KEYWORD2
+Temperature()	 KEYWORD2
 #######################################
-# Instances (KEYWORD2)
+# Instances					(KEYWORD2)
 #######################################
-M2_12VIO::              KEYWORD2
+M2_12VIO::					KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################

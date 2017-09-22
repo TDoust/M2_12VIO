@@ -24,13 +24,11 @@ Modified 6 / 6 / 16 to demonstrate Macchina 2.0 RGB LEDs,
 also functioning as a HELLO WORLD type sketch.
 
 This example shows how to fade an LED on the RGB LED
-using the analogWrite() function.
-
-The analogWrite() function uses PWM, so if
-you want to change the pin you're using, be
-sure to use another PWM capable pin.On most
-Arduino, the PWM pins are identified with
-a "~" sign, like ~3, ~5, ~6, ~9, ~10 and ~11.
+    using the analogWrite() function.
+    How to read the Vehicle Volts
+    How to get the internal temperature of the sam processor chip
+    Light LEDS on the Source I/O output pins
+    How to read an Analogue input 0-12Volts i.e. Temperature guage or such connected to the 26pin connector 
 
 This example code is in the public domain.
 */
@@ -40,10 +38,8 @@ This example code is in the public domain.
 #include <stdint.h>
 
 #include "M2_IO.h"
+#include <Debounce.h>
 #include <M2_12VIO.h>
-
-#include <pwm_lib.h>
-
 
 M2_12VIO M2IO;	//Constructor for the M2_12Vio library
 
@@ -52,8 +48,8 @@ M2_12VIO M2IO;	//Constructor for the M2_12Vio library
 //											Button Defines														//
 // ************************************************************************************************************ //
 
-debounce_t M2_Button1;
-debounce_t M2_Button2;
+debounce_t M2_Button1;  // User button 1 on the M2 hardware
+debounce_t M2_Button2;  // User button 2 on the M2 hardware
 
 
 uint32_t Button_endMillis;
@@ -101,24 +97,6 @@ uint8_t pin = 1;
 uint8_t Pin_Number = 1;
 
 
-// ************************************************************************************************************ //
-//											PWM Defines															//
-// ************************************************************************************************************ //
-using namespace arduino_due::pwm_lib;
-
-#define PWM_PERIOD_GPIO1 100000 // 1000 msecs in hundredth of usecs (1e-8 secs)
-#define PWM_DUTY_GPIO1 1000     // 10 usecs in hundredth of usecs (1e-8 secs)
-
-#define PWM_PERIOD_GPIO2 2000000    // 20 msecs in hundredth of usecs (1e-8 secs)
-#define PWM_DUTY_GPIO2 100000       // 1000 msecs in hundredth of usecs (1e-8 secs)
-
-pwm<pwm_pin::PWML0_PC2> pwm_GPIO1;
-pwm<pwm_pin::PWML1_PC4> pwm_GPIO2;
-
-// testing purposes to be removed
-//uint32_t PortC_OutputMode_Status_Reg = 0;	/* holds a Copy of PortC output status register digitalWrite(x, HIGH) for checking if OUTPUTS ar either ON or OFF */
-//uint32_t PortC_PinMode_Status_Reg = 0;	/* holds a copy of the PortC PinMode i.e. pinMode(x, OUTPUT) */
-// testing purposes to be removed
 
 /*\brief Interrupt Service Routine for Button 1 on M2 Processor Board
 *	Set the variable M2Button1.Pressed TRUE
@@ -242,7 +220,14 @@ void setup() {
 	delay(2000);
 	SerialUSB.print("\nSetup Started");
 
-	M2_Button1.M2_Button = Button1;
+    if(!pmc_is_periph_clk_enabled(13)){
+        pmc_enable_periph_clk(13);  // Enable Peripherial Clock PIOC
+    }
+    if(!pmc_is_periph_clk_enabled(12)){
+        pmc_enable_periph_clk(12);  // Enable Peripherial Clock PIOB
+    }
+
+    M2_Button1.M2_Button = Button1;
 	M2_Button1.lastButtonState = true;
 	M2_Button1.buttonState = true;
 	M2_Button1.Pressed = false;
@@ -291,56 +276,17 @@ void setup() {
 	M2_Button1.Pressed = false;
 	M2_Button2.Pressed = false;
 
-//	PortC_PinMode_Status_Reg = PIOC->PIO_OSR;
-//	SerialUSB.print("\nPorC Pin Status Reg Before\n");
-//	SerialUSB.print(PortC_PinMode_Status_Reg, BIN);
-
-//	PortC_OutputMode_Status_Reg = PIOC->PIO_ODSR;
-//	SerialUSB.print("\nPorC Output Status Reg Before\n");
-//	SerialUSB.print(PortC_OutputMode_Status_Reg, BIN);
-
-    /*			PWM			*/
-	// starting PWM signals
-	pwm_GPIO1.start(PWM_PERIOD_GPIO1, PWM_DUTY_GPIO1);
-	pwm_GPIO2.start(PWM_PERIOD_GPIO2, PWM_DUTY_GPIO2);
-
-    
     M2IO.Init_12VIO();  // Initialise the M2I/O library
 
-    //digitalWrite(I_SENSE_DAC, 128);
-    //delay(10);
-    //M2IO.Setpin_12VIO(1, ON);
-
-    //digitalWrite(GPIO1, HIGH);  // Turn the output GPIO 1-3 High = ON
-    //digitalWrite(GPIO2, HIGH);  // Turn the output GPIO 1-3 High = ON
-    //digitalWrite(GPIO3, HIGH);  // Turn the output GPIO 1-3 High = ON
-    //digitalWrite(GPIO4, LOW);  // Turn the output GPIO 1-3 High = ON
-    //digitalWrite(GPIO5, LOW);  // Turn the output GPIO 1-3 High = ON
-    //digitalWrite(GPIO6, LOW);  // Turn the output GPIO 1-3 High = ON
-
-    //delay(3000);
-    //M2IO.Setpin_12VIO(1, ON);  // Turn the output OFF
-
-//	PortC_PinMode_Status_Reg = PIOC->PIO_OSR;
-//	SerialUSB.print("\nPorC Pin Status Reg After\n");
-//	SerialUSB.print(PortC_PinMode_Status_Reg, BIN);
-
-//	PortC_OutputMode_Status_Reg = PIOC->PIO_ODSR;
-//	SerialUSB.print("\nPorC Output Status Reg After\n");
-//	SerialUSB.print(PortC_OutputMode_Status_Reg, BIN);
-
-	//delay(250);
 
 	Over_Current_Trip = false;
     Over_Current_Display_Latch = false;
 	Dimming_Up = true;
 	Brightness = 0;
-    pin = 1;
-
 }
 
 void loop() {
-	if(!Over_Current_Trip){	// non blocking LED strobe delay
+    if(!Over_Current_Trip){	// non blocking LED strobe delay
 		if((millis() - Strobe_endMillis) > Strobe_Delay){
 			Strobe_endMillis = millis();
 			switch(Strobe_Led){
@@ -440,12 +386,11 @@ void loop() {
         SerialUSB.print("V");
 
         SerialUSB.print("\nAnalogue Button = ");
-        if(M2IO.Getpin_12VIO(pin)){
+        if(M2IO.GetButton_12VIO(pin)){
             SerialUSB.print("ON");
         }else{
             SerialUSB.print("OFF");
         }
-
 
         temp = M2IO.Load_Amps();
         SerialUSB.print("\nM2 I/O Output Load = ");
@@ -464,30 +409,28 @@ void loop() {
 	Button_endMillis = millis() - Button_startMillis;
 
 	if(M2_Button1.Pressed){
-		Button_Debounce(&M2_Button1);
-		M2_Button1.FlipFlop = !M2_Button1.FlipFlop;
-		if(M2_Button1.FlipFlop){	// True
-            if(Pin_Number > 6){
-                Pin_Number = 0;
-            }
+        Button_Debounce(&M2_Button1);
+        M2_Button1.FlipFlop = !M2_Button1.FlipFlop;
+        if(M2_Button1.FlipFlop){	// True
             ++Pin_Number;   // Increment to the next output pin
+            if(Pin_Number > 6){
+                Pin_Number = 1;
+            }
             SerialUSB.print("\nButton 1 ON");
-		} else{	//False
+            SerialUSB.print("\nPin Number ");
+            SerialUSB.print(Pin_Number);
+        } else{	//False
             SerialUSB.print("\nButton 1 OFF");
-		}
-	}
+        }
+    }
 
 	if(M2_Button2.Pressed){
-		Button_Debounce(&M2_Button2);
-		pwm_GPIO1.stop();
-		pwm_GPIO2.stop();
+        Button_Debounce(&M2_Button2);
 		M2_Button2.FlipFlop = !M2_Button2.FlipFlop;
 		if(M2_Button2.FlipFlop){
-            //digitalWrite(IO_Enable, HIGH);	/* Turn the 12Vio_EN pin (ON or 1) = Enable all Outputs, (OFF or 0) = Disable all 12Vio output pins */
             M2IO.Setpin_12VIO(Pin_Number, ON);  // Turn the output ON
             SerialUSB.print("\nButton 2 ON");
 		} else{
-           //digitalWrite(IO_Enable, LOW);	/* Turn the 12Vio_EN pin (ON or 1) = Enable all Outputs, (OFF or 0) = Disable all 12Vio output pins */
             M2IO.Setpin_12VIO(Pin_Number, OFF);  // Turn the output OFF
             SerialUSB.print("\nButton 2 OFF");
 		}

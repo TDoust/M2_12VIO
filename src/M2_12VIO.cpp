@@ -3,7 +3,7 @@
 *
 *	Author:	Tony Doust
 *	Date:	8/5/2017
-*	Version: V1.0
+*	Version: V0.0.1
 *
 * Short description:
 *	Macchina 2.0 has 6 General Purpose 12 volt outputs 3xSOURCE & 3xSINK Outputs & 6 x 12 Volt Analogue Input Driver circuits.
@@ -16,12 +16,12 @@
 * Functions:
 *	Init_12VIO()				// Initialise the 12VIO & the M2 I/O power supply current monitoring
 *	Setpin_12VIO(3, ON)			// turn output pin 3 ON
-*	Setpin_12VIO(3, ON, SOURCE)	// sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
-                                // after setting the output pin to source or sink then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
+*	Setpin_12VIO(3, ON, SOURCE)	// sets output 3 to SOURCE 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
+                                // after setting the output pin to SOURCE or SINK then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
 *	Setpin_12VIO(4, OFF)		// turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)	// sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
 
-*	Setpin_12VIO(3, PWM, 75)	// set pin 3 to PWM with a 75% duty cycle
+*	Setpin_12VIO(3, PWM_PIN, 75)// set pin 3 to PWM_PIN with a 75% duty cycle
 *	Load_Amps()					// returns the total load currently being drawn from the M2 +12io line
                                 // if there has been a overload condition Load_Amps will return the load drawn at the time of the overload condition
 *	Supply_Volts()				// returns the battery volts of the vehicle the M2 is plugged into
@@ -37,9 +37,9 @@ Private Functions
 *   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *                                Important Note:
 *	**** WARNING Not suitable for use with Macchina M2 Hardware Beta version ****
-*	If using the M2 BETA hardware with this software the six source pins will only be used.
-*	if you enable the sink pins be aware that you could inadvertantely cause a short across the output
-*	by having the source & sink pins for the same output turned on at the same time.
+*	If using the M2 BETA hardware with this software the six SOURCE pins will only be used.
+*	if you enable the SINK pins be aware that you could inadvertantely cause a short across the output
+*	by having the SOURCE & SINK pins for the same output turned on at the same time.
 *
 *	"It is possible to create a direct short on the I/O Mosfets & damage your Macchina BETA M2 I/O Board
 *	by not controlling the 6 general purpose 12V I/O pins correctly."
@@ -104,42 +104,35 @@ uint32_t PortC_Output_Status_Reg = 0;   // holds a Copy of PortC output status r
 uint32_t PortC_Pin_Status_Reg = 0;      // holds a copy of the PortC PinMode i.e. pinMode(x, OUTPUT)
 
 
-/* M2_Pin[1-6][0]Holds the current settings of the Digital Output Pins[1-6] i.e. OFF, ON, SOURCE, SINK, PWM, PWM_Alt
+/* M2_Pin[1-6][0]Holds the current settings of the Digital Output Pins[1-6] i.e. OFF, ON, SOURCE, SINK, PWM_PIN, PWM_ALT
 *Pin BIT assignments
 *MSB---LSB
 * 00000000
 * | | | | | | | |_1=OFF
 * | | | | | | |__1=ON
-* | | | | | |___1=Source (Mode)
-* | | | | |____1=Sink (Mode)
-* | | | |_____1=Pwm_Pin (Mode) "** In this mode the output pin will PWM the output as a Source or Sink dependent on bits 2 or 3 **"
-* | | |______1=Pwm_Alt (Mode) "** In this mode the output will alternate between Source then Sink & viceversa **" M2_Beta only
+* | | | | | |___1=SOURCE (Mode)
+* | | | | |____1=SINK (Mode)
+* | | | |_____1=PWM_PIN (Mode) "** In this mode the output pin will PWM the output as a SOURCE or SINK dependent on bits 2 or 3 **"
+* | | |______1=PWM_ALT (Mode) "** In this mode the output will alternate between SOURCE then SINK & viceversa **" MACCHINA_M2_BETA only
 * | |_______Unused
 * |________Unused
-*/
-uint32_t M2_Pin[6][5] = {
-    { 0, GPIO1A, 0B1000/*0x8*/, GPIO1B, 0B100/*0x4*/ },
-    { 0, GPIO2A, 0B100000/*0x20*/, GPIO2B, 0B10000/*0x10*/ },
-    { 0, GPIO3A, 0B10000000/*0x80*/, GPIO3B, 0B1000000/*0x40*/ },
-    { 0, GPIO4A, 0B1000000000/*0x200*/, GPIO4B, 0B100000000/*0x100*/ },
-    { 0, GPIO5A, 0B100000000000000000000/*0x100000*/, GPIO5B, 0B1000000000000000000000/*0x200000*/ },
-    { 0, GPIO6A, 0B10000000000000000000/*0x80000*/, GPIO6B,  0B10000000000000000000000/*0x400000*/ },
-/*
- { [1-6][0] = Pin bit assignment(OFF, ON, etc),\
-// [1-6][1] = Source or Sink Pin I/O Table other than Beta Version. Beta Version Source Pin,\
+
+{  [1-6][0] = Pin bit assignment(OFF, ON, etc),\
+// [1-6][1] = SOURCE or SINK Pin I/O Table other than Beta Version. Beta Version SOURCE Pin,\
 // [1-6][2] = GPIOx Port C bit Mask pin ON,\
-// [1-6][3] = Sink Pin I/O Table (Beta Version),\
+// [1-6][3] = SINK Pin I/O Table (Beta Version),\
 // [1-6][4] = GPIOx_EN Port C bit Mask pin ON }
-*/ 
+
+*/
+uint32_t M2_Pin[6][6] = {
+    { 0, GPIO1A, 0B1000/*0x8*/, GPIO1B, 0B100/*0x4*/, 0 },
+    { 0, GPIO2A, 0B100000/*0x20*/, GPIO2B, 0B10000/*0x10*/, 0 },
+    { 0, GPIO3A, 0B10000000/*0x80*/, GPIO3B, 0B1000000/*0x40*/, 0 },
+    { 0, GPIO4A, 0B1000000000/*0x200*/, GPIO4B, 0B100000000/*0x100*/, 0 },
+    { 0, GPIO5A, 0B100000000000000000000/*0x100000*/, GPIO5B, 0B1000000000000000000000/*0x200000*/, 0 },
+    { 0, GPIO6A, 0B10000000000000000000/*0x80000*/, GPIO6B,  0B10000000000000000000000/*0x400000*/, 0 },
 };
 
-/*
-uint32_t Source_Sink_Pin[] = { GPIO1A, GPIO2A, GPIO3A, GPIO4A, GPIO5A, GPIO6A };	// Source-Sink Pin I/O Table 
-uint32_t Source_Sink_Pin_Mask[] = { 0B1000, 0B100000, 0B10000000, 0B1000000000, 0B100000000000000000000, 0B10000000000000000000 };	// Port C GPIOx bit Mask pin ON
-
-uint32_t GPIO_EN[] = { GPIO1B, GPIO2B, GPIO3B, GPIO4B, GPIO5B, GPIO6B };	// Enable Pin I/O Table
-uint32_t GPIO_EN_Mask[] = { 0B100, 0B10000, 0B1000000, 0B100000000, 0B1000000000000000000000, 0B10000000000000000000000 };  // Port C GPIOx_EN bit Mask pin ON
-*/
 
 uint32_t Analog_Pin[] = { Analog1, Analog2, Analog3, Analog4, Analog5, Analog6 };
 
@@ -210,23 +203,31 @@ uint16_t M2_12VIO::Init_12VIO(){
     //******************************************************************************************************//
     //										Initialise the GPIO output pins									//
     //******************************************************************************************************//
-#ifdef M2_Beta
+#ifdef MACCHINA_M2_BETA
     for(uint8_t i = 0; i < 6; i++){
         M2_Pin[i][0] = 1;		// Clear out the I/O Status Array & set to 1 all outputs OFF
+        M2_Pin[i][5] = 0;		// Clear out the PwmDuty & set to 0
         pinMode(M2_Pin[i][1], OUTPUT);
         digitalWrite(M2_Pin[i][1], LOW); // Set the SOURCE outputs OFF=LOW
+        //Not yet Implemented & or Fully Tested
+        /*
         pinMode(M2_Pin[i][3], OUTPUT);
         digitalWrite(M2_Pin[i][3], HIGH); // Set the SINK outputs OFF=HIGH
+        */
     }
 #else
     for(uint8_t i = 0; i < 3; i++){	// Initialise the ouput pins GPIO to OUTPUT & Turn OFF
         M2_Pin[i][0] = 1;                   // Clear out the I/O Status Array & set to 1 all outputs OFF
+        M2_Pin[i][5] = 0;                   // Clear out the PwmDuty & set to 0
         pinMode(M2_Pin[i][1], OUTPUT);
         digitalWrite(M2_Pin[i][1], LOW);    // Set the SOURCE outputs OFF=LOW
+        bitSet(M2_Pin[i][0], 2);            // Set the SOURCE Flag
 
-        M2_Pin[i+3][0] = 1;                 // Clear out the I/O Status Array & set to 1 all outputs OFF
-        pinMode(M2_Pin[i+3][1], OUTPUT);
-        digitalWrite(M2_Pin[i+3][1], HIGH); // Set the SINK outputs OFF=HIGH
+        M2_Pin[i + 3][0] = 1;                 // Clear out the I/O Status Array & set to 1 all outputs OFF
+        M2_Pin[i + 3][5] = 0;                   // Clear out the PwmDuty & set to 0
+        pinMode(M2_Pin[i + 3][1], OUTPUT);
+        digitalWrite(M2_Pin[i + 3][1], HIGH); // Set the SINK outputs OFF=HIGH
+        bitSet(M2_Pin[i + 3][0], 3);        // Set the SINK Flag
     }
 #endif
 
@@ -259,12 +260,12 @@ uint16_t M2_12VIO::Init_12VIO(){
     UnCalibrated_Vehicle_Volts_Scaler = round((((Max_Vehicle_Volts - Vehicle_Vref) / Vehicle_Vref) * 65536) / Number_Analog_Samples); // low reading 10.95V
     // (16.63 - 3.0) / 3.0 = 4.543333333333333 * 65536 = 297751.8933333333
     Calibrated_Vehicle_Volts_Scaler = round((12.10 / 13.46) * UnCalibrated_Vehicle_Volts_Scaler);
-    // (Measured Value / Calculated Value) * UnCalibrated_Vehicle_Volts_Scaler = Calibrated_Vehicle_Volts_Scaler
+    // Calibrated_Vehicle_Volts_Scaler = (Measured Value / Displayed Value) * UnCalibrated_Vehicle_Volts_Scaler
 
     UnCalibrated_Analog_IO_Scaler = round((((Max_Analog_Volts - Analog_Vref) / Analog_Vref) * 65536) / Number_Analog_Samples);
     // (16.63 - 3.0) / 3.0 = 4.543333333333333 * 65536 = 297751.8933333333 / 16 = 18609.49333333333
     Calibrated_Analog_IO_Scaler = round((10.04/10.21) * UnCalibrated_Analog_IO_Scaler);
-    // (Measured Value / Calculated Value) * UnCalibrated_Analog_IO_Scaler = Calibrated_Analog_IO_Scaler
+    // Calibrated_Analog_IO_Scaler = round((Measured Value / Displayed Value) * UnCalibrated_Analog_IO_Scaler);
 
     //******************************************************************************************************//
 	//										Arrays Lookup Table Setup										//
@@ -387,7 +388,7 @@ uint32_t M2_12VIO::Load_Amps(){
 *	Read the Vehicle supply voltage to the M2 & return the scaled vehicle voltage in Volts
 *	
 *\param NIL
-*\return float Scaled Supply Voltage as Volts i.e. 16.20
+*\return uint32_t Scaled Supply Voltage in milliVolts i.e. 1620
 */
 uint32_t M2_12VIO::Supply_Volts(){
 	uint32_t Temp = 0;
@@ -404,10 +405,11 @@ uint32_t M2_12VIO::Supply_Volts(){
 
 /**
 *\brief
+*\param Read_12VIO(uint32_t IO_Pin) IO_Pin 1-6
+*
 *	Read the Value from the Analogue Input & return the scaled value
 *
-*\param NIL
-*\return float Scaled Analogue Value i.e. 16.20
+*\return uint32_t Scaled Analogue Value in milliVolts i.e. 1620
 */
 uint32_t M2_12VIO::Read_12VIO(uint32_t IO_Pin){
     uint32_t Temp = 0;
@@ -425,156 +427,162 @@ uint32_t M2_12VIO::Read_12VIO(uint32_t IO_Pin){
     return(0);
 }
 
-//TODO fix PIOC->PIO_xxx
-//TODO finish PWM PIN
+
 /**
 \brief Setpin_12VIO(uint8_t IO_pin, uint8_t Pin_Mode)
-\param IO_pin (in the range for Output_Pin 1 to 6)
-\param Pin_Mode (OFF=0, ON=1, Source=2, Sink=3, Pwm_Pin=4, Pwm_Alt=5)
+\param IO_pin (in the range Output_Pin 1 to 6)
+\param Pin_Mode (OFF=0, ON=1)
 *
 \brief
-*	On the First call Set the M2 Digital Output to Source or Sink etc.
-*	On the second call Set the M2 Digital Output to ON or OFF
+*	Set the M2 Digital Output to ON or OFF
 *	Checks if the IO_Pin being SET is in the correct pin range (1-6)
-*	Checks if the Pin_Mode is in the correct pin mode range (0-5)
+*	Checks if the Pin_Mode is in the correct pin mode range (0-1)
 
-enum List
+enum Pin_Mode
 0=OFF
 1=ON
-2=Source
-3=Sink
-4=Pwm_Pin
-5=Pwm_Alt
 *
 *\return Global Variable uint16_t Setpin_Error ("Success = 0" or "Error = Number")
 */
 uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode){
-	Setpin_Error = 0;
-/*	// TODO fix PIOC->PIO_xxx
-	PortC_Pin_Status_Reg = PIOC->PIO_OSR;	// Get the OUTPUT PIN status for checking if pinMdoe() has been set for the output
-	//PortC_Pin_Status_Reg = PIOC->PIO_PSR;	// Get the OUTPUT PIN status for checking if pinMdoe() has been set for the output
-	//PortC_Output_Status_Reg = PIOC->PIO_ODSR;	// Get the OUTPUT status register of port C for cheking if pins are turned ON or OFF
-	PortC_Output_Status_Reg = PIOC->PIO_PDSR;	// Get the OUTPUT status register of port C for cheking if pins are turned ON or OFF
-	if(!((PortC_Pin_Status_Reg & M2_Pin[IO_Pin - 1][2]) || (PortC_Pin_Status_Reg & M2_Pin[IO_Pin - 1][4]))){	// Output pin has not been set pinMode(Output)
-		Setpin_Error = Err_Init;	// Init_12VIO has not been run
-	} else{
-*/
-		if((IO_Pin >= 1) && (IO_Pin <= 6)){	// Test if IO_Pin in range
-			switch(Pin_Mode){
+    Setpin_Error = 0;
+    if((IO_Pin > 0) && (IO_Pin <= 6)){	// Test if IO_Pin in range
+        if(Pin_Mode <= 1){	// Test if Mode is in range
+            switch(Pin_Mode){
                 case OFF:{       // Mode 0 OFF
                         bitClear(M2_Pin[IO_Pin - 1][0], 1);	// Reset the ON Flag
                         bitSet(M2_Pin[IO_Pin - 1][0], 0);	// Set the OFF Flag
-                        delay(5);
-                        if(IO_Pin >= 1 && IO_Pin <= 3){
-                            digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the OUTPUT Pin OFF Output pins 1-3
-                        } else{
-                            digitalWrite(M2_Pin[IO_Pin - 1][1], HIGH);    // Turn the OUTPUT Pin OFF Output pins 4-6
+                        delay(5);   // delay to prevent false triggering of overload interrupt
+                    #ifdef MACCHINA_M2_BETA
+                        // TODO finish Beta PWM Alternate
+                        if((M2_Pin[IO_Pin - 1][0] & 0x30)){ //PWM_PIN or PWM_ALT pwm mode
+                            if((M2_Pin[IO_Pin - 1][0] & 0x20)){ // PWM_PIN mode
+                                if((M2_Pin[IO_Pin - 1][0] & 0x04)){ // SOURCE PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][1], OFF); // Turn OFF the SOURCE pin
+                                } else{ // SINK PWM_PIN mode
+                                    //Not yet Implemented & or Fully Tested
+                                    /*
+                                    analogWrite(M2_Pin[IO_Pin - 1][3], OFF); // Turn OFF the SINK pin
+                                    */
+                                }
+                            } else{ // PWM_ALT pwm mode
+                                //Not yet Implemented & or Fully Tested
+                                /*
+                                analogWrite(M2_Pin[IO_Pin - 1][1], OFF); // Turn OFF the SOURCE pin
+                                analogWrite(M2_Pin[IO_Pin - 1][3], 255); // Turn OFF the SINK pin
+                                */
+                            }
+                        } else{ // Not PWM
+                            if(M2_Pin[IO_Pin - 1][0] & 0x20){ // PWM_PIN mode
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the SOURCE OUTPUT Pin OFF
+                                //Not yet Implemented & or Fully Tested
+                                /*
+                                digitalWrite(M2_Pin[IO_Pin - 1][3], HIGH);    // Turn the SINK OUTPUT Pin OFF
+                                */
+                            } else{
+                                if((M2_Pin[IO_Pin - 1][0] & 4)){  // SOURCE mode
+                                    digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the SOURCE OUTPUT Pin OFF
+                                } else if((M2_Pin[IO_Pin - 1][0] & 8)){  // SINK mode
+                                    //Not yet Implemented & or Fully Tested
+                                    /*
+                                    digitalWrite(M2_Pin[IO_Pin - 1][3], HIGH);    // Turn the SINK OUTPUT Pin OFF
+                                    */
+                                }
+                            }
                         }
+                    #else
+                        if((M2_Pin[IO_Pin - 1][0] & 0x30)){ // PWM_PIN or PWM_ALT pwm mode
+                            if((M2_Pin[IO_Pin - 1][0] & 0x20)){ // PWM_PIN mode
+                                if((M2_Pin[IO_Pin - 1][0] & 0x04)){ // SOURCE PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][1], OFF); // Turn OFF the SOURCE pin
+                                } else{ // SINK PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][3], OFF); // Turn OFF the SINK pin
+                                }
+                            } else{ // PWM_ALT pwm mode
+                                //Not Implemented reserved for possible future use/hardware revision
+                                /*
+                                //analogWrite(M2_Pin[IO_Pin - 1][1], OFF); // Turn OFF the SOURCE pin
+                                //analogWrite(M2_Pin[IO_Pin - 1][3], 255); // Turn OFF the SINK pin
+                                */
+                            }
+                        } else{  // Not PWM_PIN or PWM_ALT pwm mode
+                            if(IO_Pin >= 1 && IO_Pin <= 3){
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the OUTPUT Pin OFF Output pins 1-3
+                            } else{
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], HIGH);    // Turn the OUTPUT Pin OFF Output pins 4-6
+                            }
+                        }
+                    #endif
                         analogWrite(Dac_Compare, Analog_Bit_Table[IO_Pin]); //adjust the DAC output to reflect the number of outputs turned OFF
-                        SerialUSB.print("\nOutput Pin OFF ");
+                        //SerialUSB.print("\nOutput Pin OFF ");
                     }
-					break;
+                    break;
                 case ON:{        // Mode 1 ON
                         analogWrite(Dac_Compare, Analog_Bit_Table[IO_Pin]); //adjust the DAC output to reflect the number of outputs turned ON
                         bitClear(M2_Pin[IO_Pin - 1][0], 0);	// Reset the OFF Flag
                         bitSet(M2_Pin[IO_Pin - 1][0], 1);	// Set the ON Flag
-                        delay(5);
-                        if(IO_Pin >= 1 && IO_Pin <= 3){
-                            digitalWrite(M2_Pin[IO_Pin - 1][1], HIGH);	// Turn the OUTPUT Pin ON Output pins 1-3
-                        } else{
-                            digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the OUTPUT Pin ON Output pins 4-6
+                        delay(5);   // delay to prevent false triggering of overload interrupt
+                    #ifdef MACCHINA_M2_BETA
+                        if((M2_Pin[IO_Pin - 1][0] & 0x30)){ //PWM_PIN or PWM_ALT pwm mode
+                            if((M2_Pin[IO_Pin - 1][0] & 0x20)){ // PWM_PIN mode
+                                if((M2_Pin[IO_Pin - 1][0] & 0x04)){ // SOURCE PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][1], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SOURCE pin
+                                } else{ // SINK PWM_PIN mode
+                                    //Not yet Implemented & or Fully Tested
+                                    /*
+                                    analogWrite(M2_Pin[IO_Pin - 1][3], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SINK pin
+                                    */
+                                }
+                            } else{ // PWM_ALT pwm mode
+                                //Not yet Implemented & or Fully Tested
+                                /*
+                                analogWrite(M2_Pin[IO_Pin - 1][1], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SOURCE pin
+                                analogWrite(M2_Pin[IO_Pin - 1][3], map(M2_Pin[IO_Pin - 1][5], 1, 100, 255, 1)); // Turn on the SINK pin
+                                */
+                            }
+                        }else{  // Not PWM_PIN or PWM_ALT pwm mode
+                            if((M2_Pin[IO_Pin - 1][0] & 4)){  // SOURCE mode
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], HIGH);     // Turn the SOURCE OUTPUT Pin ON
+                            } else if((M2_Pin[IO_Pin - 1][0] & 8)){
+                                //Not yet Implemented & or Fully Tested
+                                /*
+                                digitalWrite(M2_Pin[IO_Pin - 1][3], LOW);    // Turn the SINK OUTPUT Pin ON
+                                */
+                            }
                         }
-                        SerialUSB.print("\nOutput Pin ON ");
+                    #else
+                        if((M2_Pin[IO_Pin - 1][0] & 0x30)){ // PWM_PIN or PWM_ALT pwm mode
+                            if((M2_Pin[IO_Pin - 1][0] & 0x20)){ // PWM_PIN mode
+                                if((M2_Pin[IO_Pin - 1][0] & 0x04)){ // SOURCE PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][1], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SOURCE pin
+                                } else{ // SINK PWM_PIN mode
+                                    analogWrite(M2_Pin[IO_Pin - 1][3], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SINK pin
+                                }
+                            } else{ // PWM_ALT pwm mode
+                                //Not Implemented reserved for possible future use/hardware revision
+                                /*
+                                //analogWrite(M2_Pin[IO_Pin - 1][1], map(M2_Pin[IO_Pin - 1][5], 1, 100, 1, 255)); // Turn on the SOURCE pin
+                                //analogWrite(M2_Pin[IO_Pin - 1][3], map(M2_Pin[IO_Pin - 1][5], 1, 100, 255, 1)); // Turn on the SINK pin
+                                */
+                            }
+                        } else{  // Not PWM_PIN or PWM_ALT pwm mode
+                            if(IO_Pin >= 1 && IO_Pin <= 3){
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], HIGH);	// Turn the OUTPUT Pin ON Output pins 1-3
+                            } else{
+                                digitalWrite(M2_Pin[IO_Pin - 1][1], LOW);     // Turn the OUTPUT Pin ON Output pins 4-6
+                            }
+                        }
+                    #endif
+                        //SerialUSB.print("\nOutput Pin ON ");
                     }
                     break;
-				default:
-					// Pin_Mode not in range //
-					Setpin_Error = Err_Mode_Range;
-					break;
-			}
-		} else{ // Pin_Mode not in range //
-			Setpin_Error = Err_Pin_Range;
-		}
-/*	// TODO fix PIOC->PIO_xxx
-	}
-*/
-	return(Setpin_Error);
-}
-
-//TODO finish PWM PIN
-/**
-\brief Setpin_12VIO(uint8_t IO_pin, uint8_t Pin_Mode)
-\param IO_pin (in the range for Output_Pin 1 to 6)
-\param Pin_Mode (OFF=0, ON=1, Source=2, Sink=3, Pwm_Pin=4, Pwm_Alt=5)
-*
-\brief
-*	On the First call Set the M2 Digital Output to Source or Sink etc.
-*	On the second call Set the M2 Digital Output to ON or OFF
-*	Checks if the IO_Pin being SET is in the correct pin range (1-6)
-*	Checks if the Pin_Mode is in the correct pin mode range (0-5)
-
-enum List
-0=OFF
-1=ON
-2=Source
-3=Sink
-4=Pwm_Pin
-5=Pwm_Alt
-*
-*\return Global Variable uint16_t Setpin_Error ("Success = 0" or "Error = Number")
-*/
-uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint16_t Hz){
-    Setpin_Error = 0;
-    if((IO_Pin >= 1) && (IO_Pin <= 6)){	// Test if IO_Pin in range
-        switch(Source_Mode){
-            case Source:{	// Mode 2 SOURCE
-                #ifdef M2_Beta	// M2 Beta legacy Hardware Sink Output Pins defined in variant.h
-                    if(PortC_Output_Status_Reg & M2_Pin[IO_Pin - 1][2]){	// Error if Output PIN is ON
-                        Setpin_Error = Err_Mode_ON;	// Sink or Source Pin is already turned ON & trying to change state
-                        M2_12VIO::Setpin_12VIO(IO_Pin, OFF);
-                        break;
-                    } else{	// Output is Turned OFF therfore OK to change Mode //
-                        bitClear(M2_Pin[IO_Pin - 1][0], 3);	// Reset the SINK Flag
-                        bitSet(M2_Pin[IO_Pin - 1][0], 2);	// Set the SOURCE Flag
-                        //digitalWrite(M2_Pin[IO_Pin - 1][2], HIGH);	// Set the SOURCE PIN HIGH
-                        M2_12VIO::Setpin_12VIO(IO_Pin, ON);
+                default:{   // Pin_Mode not in range //
+                        Setpin_Error = Err_Mode_Range;
                     }
-                #else
-                       // At this stage nothing to do reserved for later possible use
-                #endif  // M2 Beta endif
-                }
-                break;
-            case Sink:{      // Mode 3 SINK
-                #ifdef M2_Beta	// M2 Beta legacy Hardware Sink Output Pins defined in variant.h
-                    if(PortC_Output_Status_Reg & M2_Pin[IO_Pin - 1][4]){	// Error if Output PIN is ON
-                        Setpin_Error = Err_Mode_ON;	// Sink or Source Pin is already turned ON & trying to change state
-                        M2_12VIO::Setpin_12VIO(IO_Pin, OFF);
-                        break;
-                    } else{	// Output is Turned OFF therfore OK to change Mode //
-                        bitClear(M2_Pin[IO_Pin - 1][0], 2);	// Reset the SOURCE Flag
-                        bitSet(M2_Pin[IO_Pin - 1][0], 3);	// Set the SINK Flag
-                        //digitalWrite(M2_Pin[IO_Pin - 1][3], LOW);	// Set the SINK PIN LOW
-                        M2_12VIO::Setpin_12VIO(IO_Pin, ON);
-                    }
-                #else
-                        // At this stage nothing to do reserved for later possible use
-                #endif  // M2 Beta endif
-                }
-                break;
-            case Pwm_Pin:{   // Mode 4 PWM_PIN
-                   // TODO
-                }
-                break;
-            case Pwm_Alt:{   // Mode 5 PWM_ALT only for use with Beta hardware
-                #ifdef M2_Beta	// M2 Beta legacy Hardware Sink Output Pins defined in variant.h
-                            //TODO
-                #endif  // M2 Beta endif
-                }
-                break;
-            default:{   // Pin_Mode not in range //
-                    Setpin_Error = Err_Mode_Range;
-                }
-                break;
+                    break;
+            }
+        } else{
+            Setpin_Error = Err_Mode_Range;
         }
     } else{ // Pin_Mode not in range //
         Setpin_Error = Err_Pin_Range;
@@ -582,17 +590,212 @@ uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Sourc
     return(Setpin_Error);
 }
 
+
+/*
+\brief Setpin_12VIO(uint8_t IO_pin, uint8_t Pin_Mode, uint8_t Source_Mode)
+*
+\param uint8_t IO_pin (in the range for Output_Pin 1 to 6)
+\param uint8_t Pin_Mode (OFF=0, ON=1)
+\param uint8_t Source_Mode ( SOURCE=0, SINK=1)
+*
+\brief
+*	Checks if the IO_Pin being SET is in the correct pin range (1-6)
+*	Checks if Pin_Mode, Source_Mode is in the correct range (0-1)
+*	Set the M2 Digital Output to ON or OFF
+*	Set the M2 Digital Output to SOURCE or SINK etc.+
+
+enum Pin_Mode
+0=OFF
+1=ON
+enum Source_Mode
+0=SOURCE
+1=SINK
+*
+*\return Global Variable uint16_t Setpin_Error ("Success = 0" or "Error = Number")
+*/
+uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode){
+    Setpin_Error = 0;
+    if((IO_Pin > 0) && (IO_Pin <= 6)){	// Test if IO_Pin in range
+        if(Pin_Mode <= 1 || Source_Mode <= 1){	// Test if Mode is in range
+            switch(Source_Mode){
+                case SOURCE:{	// Mode 2 SOURCE
+                    #ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware SINK Output Pins defined in variant.h
+                        if(M2_Pin[IO_Pin - 1][0] & 0x02){	// Output is Turned ON therfore turn OFF before changing mode
+                            M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                        }
+                        bitClear(M2_Pin[IO_Pin - 1][0], 3);	// Reset the SINK Flag
+                        bitSet(M2_Pin[IO_Pin - 1][0], 2);	// Set the SOURCE Flag
+                        M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                    #else
+                        bitClear(M2_Pin[IO_Pin - 1][0], 3);	// Reset the SINK Flag
+                        bitSet(M2_Pin[IO_Pin - 1][0], 2);	// Set the SOURCE Flag
+                                                            // At this stage nothing more to do reserved for later possible use
+                    #endif  // M2 Beta endif
+                    }
+                    break;
+                case SINK:{      // Mode 3 SINK
+                    #ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware SINK Output Pins defined in variant.h
+                        if(M2_Pin[IO_Pin - 1][0] & 0x02){	// Output is Turned ON therfore turn OFF before changing mode
+                            M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                        }
+                        bitClear(M2_Pin[IO_Pin - 1][0], 2);	// Reset the SOURCE Flag
+                        bitSet(M2_Pin[IO_Pin - 1][0], 3);	// Set the SINK Flag
+                        M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                    #else
+                        bitClear(M2_Pin[IO_Pin - 1][0], 2);	// Reset the SOURCE Flag
+                        bitSet(M2_Pin[IO_Pin - 1][0], 3);	// Set the SINK Flag
+                                                            // At this stage nothing more to do reserved for later possible use
+                    #endif  // M2 Beta endif
+                    }
+                    break;
+                default:{   // SOURCE_Mode not in range //
+                        Setpin_Error = Err_Mode_Range;
+                    }
+                    break;
+            }
+            if(!(M2_Pin[IO_Pin - 1][0] & 0x30)){  // if Not PWM_PIN or PWM_ALT pwm carry on else return to PWM caller
+                switch(Pin_Mode){
+                    case OFF:       // Mode 0 OFF
+                    case ON:        // Mode 1 ON
+                        M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                        break;
+                    default:{   // SOURCE Mode not in range //
+                            Setpin_Error = Err_Mode_Range;
+                        }
+                        break;
+                }
+            }
+        } else{
+            Setpin_Error = Err_Mode_Range;
+        }
+    } else{ // Pin_Mode not in range //
+        Setpin_Error = Err_Pin_Range;
+    }
+    return(Setpin_Error);
+}
+
+
+/*
+\brief Setpin_12VIO(uint8_t IO_pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint16_t Duty)
+*
+\param uint8_t IO_pin (in the range for Output_Pin 1 to 6)
+\param uint8_t Pin_Mode (OFF=0, ON=1)
+\param uint8_t Source_Mode ( SOURCE=0, SINK=1)
+\param uint8_t Pwm_Mode (PWM_PIN=0, PWM_ALT=1)
+\param uint16_t Duty (Duty=1-255)
+*
+\brief
+*	Checks if the IO_Pin being SET is in the correct pin range (1-6)
+*	Checks if Pin_Mode, Source_Mode, PWM_Mode is in the correct range (0-1)
+*	Set the M2 Digital Output to ON or OFF
+*	Set the M2 Digital Output to SOURCE or SINK etc.+
+*	Set the PWM duty cycle 1-100
+
+enum Pin_Mode
+0=OFF
+1=ON
+enum Source_Mode
+0=SOURCE
+1=SINK
+enum Pwm_Mode
+0=PWM_PIN
+1=PWM_ALT
+*
+*\return Global Variable uint16_t Setpin_Error ("Success = 0" or "Error = Number")
+*/
+uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint8_t Duty){
+    Setpin_Error = 0;
+    if((IO_Pin > 0) && (IO_Pin <= 6)){	// Test if IO_Pin in range
+        if(Pin_Mode <= 1 || Source_Mode <= 1 || Pwm_Mode <= 1){	// Test if Mode is in range
+            if(Duty > 0 && Duty <= 100){    // Test if duty cycle in range
+                switch(Pwm_Mode){
+                    case PWM_PIN:{   // Mode 4 PWM_PIN
+                            bitClear(M2_Pin[IO_Pin - 1][0], 5);	// Reset the PWM_ALT Flag
+                            bitSet(M2_Pin[IO_Pin - 1][0], 4);	// Set the PWM_PIN Flag
+                            M2_Pin[IO_Pin - 1][5] = Duty;
+                        }
+                        break;
+                    case PWM_ALT:{   // Mode 5 PWM_ALT only for use with Beta hardware
+                        #ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware SINK Output Pins defined in variant.h
+                            bitClear(M2_Pin[IO_Pin - 1][0], 4);	// Reset the PWM_PIN Flag
+                            bitSet(M2_Pin[IO_Pin - 1][0], 5);	// Set the PWM_ALT Flag
+                            M2_Pin[IO_Pin - 1][5] = Duty;
+                        #endif  // M2 Beta endif
+                        }
+                        break;
+                    default:{   // PWM_PIN_Pin not in range //
+                            Setpin_Error = Err_Mode_Range;
+                        }
+                        break;
+                }
+                switch(Source_Mode){
+                    case SOURCE:	// Mode 0 SOURCE
+                    case SINK:      // Mode 1 SINK
+                        M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode, Source_Mode);
+                        break;
+                    default:{   // SOURCE Mode not in range //
+                            Setpin_Error = Err_Mode_Range;
+                        }
+                        break;
+                }
+                switch(Pin_Mode){
+                    case OFF:       // Mode 0 OFF
+                    case ON:        // Mode 1 ON
+                        M2_12VIO::Setpin_12VIO(IO_Pin, Pin_Mode);
+                        break;
+                    default:{   // SOURCE Mode not in range //
+                            Setpin_Error = Err_Mode_Range;
+                        }
+                        break;
+                }
+            } else{ // Pin_Mode not in range //
+                Setpin_Error = Err_Duty_Range;
+            }
+        } else{
+            Setpin_Error = Err_Mode_Range;
+        }
+    } else{
+        Setpin_Error = Err_Pin_Range;
+    }
+    return(Setpin_Error);
+}
+
+
+/*
+\brief InitButton_12VIO(uint32_t IO_Pin)
+*
+\param (uint32_t Analog_Pin(in the range 1-6))
+*
+*	Initialise the Analog_Pin as a pseduo digital input
+*	Initialise the Debounce registers for the Analogue Input pin in the range 1-6 corresponding to Analogue Input pins 1-6
+*
+*\return Global Variable uint16_t Setpin_Error ("Success = 0" or "Error = Number")
+*/
+uint16_t M2_12VIO::InitButton_12VIO(uint32_t IO_Pin){
+    Setpin_Error = 0;
+    if((IO_Pin >= 1) && (IO_Pin <= 6)){	// Test if Analogue IO_Pin in range
+        if(!PMC->PMC_PCSR0 & g_APinDescription[Analog_Pin[IO_Pin - 1]].ulPeripheralId){ // Test if the peripheral clock is enabled
+            pmc_enable_periph_clk(g_APinDescription[Analog_Pin[IO_Pin - 1]].ulPeripheralId);  // Enable Peripherial Clock PIOx
+        }
+        g_APinDescription[Analog_Pin[IO_Pin - 1]].pPort->PIO_IFER = g_APinDescription[Analog_Pin[IO_Pin - 1]].ulPin; // Input Filter Enable Register
+        g_APinDescription[Analog_Pin[IO_Pin - 1]].pPort->PIO_DIFSR = g_APinDescription[Analog_Pin[IO_Pin - 1]].ulPin; // Debouncing Input Filter Select Register
+        g_APinDescription[Analog_Pin[IO_Pin - 1]].pPort->PIO_SCDR |= 0x02; // Slow Clock Divider Register
+    }
+    return(Setpin_Error);
+}
+
+
 /*
 \brief Getpin_12VIO(uint32_t IO_Pin)
-
-\param IO_pin (in the range 1-6)
-*	call with an IO pin in the range 1-6 corresponding to Analogue Input pins 1-6
-*This function can be used as a pseudo Button digital input external to the M2 
-*with power supplied from the 26pin connector +12Vio
 *
-\return TRUE or FALSE (TRUE = input pin ON) (FALSE = input pin OFF)
+\param (uint32_t Analog_Pin(in the range 1-6))
+*	call with an Analog_Pin in the range 1-6 corresponding to Analogue Input pins 1-6
+*	This function can be used as a pseudo Button digital input external to the M2
+*	with power supplied from the 26pin connector +12Vio
+*
+\return bool TRUE or FALSE (TRUE = input pin ON) (FALSE = input pin OFF)
 */
-bool M2_12VIO::Getpin_12VIO(uint32_t IO_Pin){
+bool M2_12VIO::GetButton_12VIO(uint32_t IO_Pin){
     bool Return_Event = false;
     if((IO_Pin > 0) && (IO_Pin <= 6)){
         uint32_t Temp = 0;
@@ -614,40 +817,6 @@ bool M2_12VIO::Getpin_12VIO(uint32_t IO_Pin){
     }
     return(Return_Event);
 }
-
-
-// TODO Finish PWM TD 18/8/2017
-/*
-uint16_t M2_12VIO::Setpwm_12VIO(uint8_t IO_Pin, uint8_t Pwm_Mode, uint16_t Hz){
-	Setpin_Error = 0;
-	PortC_Pin_Status_Reg = PIOC->PIO_OSR;	// Get the OUTPUT PIN status for checking if pinMdoe() has been set for the output
-	PortC_Output_Status_Reg = PIOC->PIO_ODSR;	// Get the OUTPUT status register of port C for cheking if pins are turned ON or OFF
-	if(!((PortC_Pin_Status_Reg & Source_Sink_Pin_Mask[IO_Pin - 1]) || (PortC_Pin_Status_Reg & GPIO_EN_Mask[IO_Pin - 1]))){	// Output pin has not been set pinMode(Output)
-		Setpin_Error = Err_Init;	// Init_12VIO has not been run
-	} else{
-		if((IO_Pin >= 1) && (IO_Pin <= 6)){	// IO_Pin in correct range
-			switch(Pwm_Mode){
-				case Pwm_Pin:	// Mode 4 PWM_PIN
-					Setpin_12VIO(IO_Pin, OFF);
-
-					break;
-				case Pwm_Alt:	// Mode 5 PWM_ALT
-					Setpin_12VIO(IO_Pin, OFF);
-
-					break;
-				default:
-					// Pin_Mode not in range
-					Setpin_Error = Err_Mode_Range;
-					break;
-			}
-		} else{
-			// Pin_Mode not in range
-			Setpin_Error = Err_Pin_Range;
-		}
-	}
-	return(Setpin_Error);
-}
-*/
 
 
 /*

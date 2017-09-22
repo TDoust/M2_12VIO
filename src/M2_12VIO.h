@@ -3,7 +3,7 @@
 *
 *	Author:	Tony Doust
 *	Date:	8/5/2017
-*	Version: V1.0
+*	Version: V0.0.1
 *
 * Short description:
 *	Macchina 2.0 has 6 General Purpose 12 volt outputs 3xSOURCE & 3xSINK Outputs & 6 x 12 Volt Analogue Input Driver circuits.
@@ -16,8 +16,8 @@
 * Functions:
 *	Init_12VIO()				// Initialise the 12VIO & the M2 I/O power supply current monitoring
 *	Setpin_12VIO(3, ON)			// turn output pin 3 ON
-*	Setpin_12VIO(3, ON, SOURCE)	// sets output 3 to Source 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
-                                // after setting the output pin to source or sink then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
+*	Setpin_12VIO(3, ON, SOURCE)	// sets output 3 to SOURCE 12 volts & turns output pin ON	"*** Macchina BETA Hardware ONLY ***"
+                                // after setting the output pin to SOURCE or sink then use Setpin_12VIO(3, ON or OFF) to switch the pin ON or OFF
 *	Setpin_12VIO(4, OFF)		// turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)	// sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
 
@@ -37,9 +37,9 @@ Private Functions
 *	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *				Important Note:
 *	**** WARNING Not suitable for use with Macchina M2 Hardware Beta version ****
-*	If using the M2 BETA hardware with this software the six source pins will only be used.
+*	If using the M2 BETA hardware with this software the six SOURCE pins will only be used.
 *	if you enable the sink pins be aware that you could inadvertantely cause a short across the output
-*	by having the source & sink pins for the same output turned on at the same time.
+*	by having the SOURCE & sink pins for the same output turned on at the same time.
 *
 *	It is possible to create a direct short on the I/O Mosfets & damage your Macchina BETA M2 I/O Board
 *	by not controlling the 6 general purpose 12V I/O pins correctly.
@@ -92,7 +92,11 @@ extern "C" {
     };
 
     enum Source_Mode{
-        Source, Sink, Pwm_Pin, Pwm_Alt
+        SOURCE, SINK
+    };
+
+    enum Pwm_Mode{
+        PWM_PIN, PWM_ALT
     };
 
     enum Output_Pin{
@@ -108,7 +112,7 @@ extern "C" {
     // ************************************************************************************************************ //
     /* I/O Port 1 */
 #define GPIO1A GPIO1
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO1B GPIO1_B
 #else
 #define GPIO1B GPIO1
@@ -117,7 +121,7 @@ extern "C" {
 
     /* I/O Port 2 */
 #define GPIO2A GPIO2
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO2B GPIO2_B
 #else
 #define GPIO2B GPIO2
@@ -126,7 +130,7 @@ extern "C" {
 
     /* I/O Port 3 */
 #define GPIO3A GPIO3
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO3B GPIO3_B
 #else
 #define GPIO3B GPIO3
@@ -135,7 +139,7 @@ extern "C" {
 
     /* I/O Port 4 */
 #define GPIO4A GPIO4
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO4B GPIO4_B
 #else
 #define GPIO4B GPIO4
@@ -144,7 +148,7 @@ extern "C" {
 
     /* I/O Port 5 */
 #define GPIO5A GPIO5
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO5B GPIO5_B
 #else
 #define GPIO5B GPIO5
@@ -153,7 +157,7 @@ extern "C" {
 
     /* I/O Port 6 */
 #define GPIO6A GPIO6
-#ifdef M2_Beta	// M2 Beta legacy Hardware Sink Input Pins
+#ifdef MACCHINA_M2_BETA	// M2 Beta legacy Hardware Sink Input Pins
 #define GPIO6B GPIO6_B
 #else
 #define GPIO6B GPIO6
@@ -209,8 +213,9 @@ class M2_12VIO{
 		#define Err_Mode_Selection_On 4	/* SOURCE or SINK Pin selected is incorrect prior to Turning Pin ON */
 		#define Err_Mode_Selection_Off 5	/* SOURCE or SINK Pin selected is incorrect prior to Turning Pin OFF */
 		#define Err_Mode_Conflict 6	/* SOURCE or SINK previously set does not match current Operation*/
-		#define Err_Mode_ON 7	/* Pin already turned ON while trying to change Modes Source to Sink or viceversa */
+		#define Err_Mode_ON 7	/* Pin already turned ON while trying to change Modes SOURCE to Sink or viceversa */
 		#define Err_Init 8	/* Pin mode has not been selected prior to turning ON or OFF */
+        #define Err_Duty_Range 9  /* Duty cycle not in range */
 
 
     public:
@@ -221,10 +226,10 @@ class M2_12VIO{
 		uint32_t Supply_Volts();
 		uint32_t Read_12VIO(uint32_t IO_Pin);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode);
-//        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode);
-        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint16_t Hz);
-        bool Getpin_12VIO(uint32_t IO_Pin);
-//		uint16_t Setpwm_12VIO(uint32_t IO_Pin, uint8_t Pwm_Mode, uint16_t Hz);
+        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode);
+        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint8_t Duty);
+        uint16_t InitButton_12VIO(uint32_t IO_Pin);
+        bool GetButton_12VIO(uint32_t IO_Pin);
 		float Temperature();
 
     private:

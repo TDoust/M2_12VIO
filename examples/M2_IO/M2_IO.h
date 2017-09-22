@@ -14,7 +14,7 @@
 #define LED_RGB_Blue RGB_BLUE
 
 // ***Change this value if the button is triggering for more than 1 button push*** //
-uint32_t Debounce_Delay = 1;	// this is the number of milli seconds delay before checking the button again in Debounce
+uint32_t Debounce_Delay = 3;	// this is the number of milli seconds delay before checking the button again in Debounce
 
 typedef struct{
 	uint32_t M2_Button;                     // the button we are reading from

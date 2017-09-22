@@ -1,12 +1,7 @@
 # M2_12VIO Macchina M2 I/O Library
 
-# !!! WARNING too M2 Beta Hardware users !!!
-	The only difference between the M2Beta version & the Production version hardware that this library interacts with are the 12VIO SINK pins.
-	It is recommended that the end user selects Macchina M2 in the boards manager & not Macchina M2 (Beta).
-	By selecting Macchina M2 in the Board Manager this will avoid possible damage to the hardware. 
 
-
-*  M2_12VIO.h Library for the Macchina M2
+*  M2_IO.ino for the Macchina M2
 
 	Author:	Tony Doust
 	Date:	8/5/2017
@@ -15,9 +10,7 @@
 # Short description:
 	Macchina 2.0 has 6 General Purpose 12 volt outputs 3xSOURCE & 3xSINK Outputs & 6 x 12Volt Analogue Input Driver
 	circuits.
-	The 12VIO.h Library is for control & Monitoring of the Macchina M2 general purpose 12V IO pins available on the
-	26 pin connector.
-
+The example file M2_IO.ino & M2_IO.h demonstrates how to use the functions from the M2_12VIO library 
 	When Sourcing power from the M2 or (Sinking power from the M2 via +12VIO on PIN 19 of the 26 pin connector)
 	the 12V rail is monitored by hardware current monitor circuit via I_SENSE
 	with feed back from the SAM processor chip DAC output I_SENSE_DAC to the hardware monitoring circuit.
@@ -25,6 +18,26 @@
 	The goal here is to be able to dynamically measure how much power 1 or all currently ON external device are using
 	& ensure that the total power used from the OBD2 port does not exceed X amps and blow the car's OBD2 fuse or
 	the main fuse (F1 2.6A) on the Macchina M2.
+
+The functions
+	Supply_Volts(), Read_12VIO(IO_Pin) return uncalibarated milliVolt values & for most users these values will be close enough.
+	The reason for needing to carry out calibrartion is due to vaiances in resistor values & other component tolerances.
+	Should the end user require more accurate values then calibration will be required.
+	The calibration is carried out by appling a known value say 12VDC to the input & measure this with a good quality voltmeter
+	& comparing this value to the value output from the M2 via the SerialUSB.print() function to the console. Once these 2 values are obtained
+	then go to the M2_12VIO::Init_12VIO() function line 262 "Calibrated_Vehicle_Volts_Scaler" & line 267 "Calibrated_Analog_IO_Scaler"
+	& change the values Measured Value & Displayed Value. Once these values have been changed then go to the appropriate functions
+	M2_12VIO::Supply_Volts() line 402 & change the Calibrated_Vehicle_Volts_Scaler to UnCalibrated_Vehicle_Volts_Scaler for the Vehicle Voltage.
+	M2_12VIO::Read_12VIO(uint32_t IO_Pin) line 425 & change the Calibrated_Analog_IO_Scaler to UnCalibrated_Analog_IO_Scaler for the 6 Analogue inputs.
+
+# External Testing Components Required:
+	The Examples sketches were tested by installing LEDS with suitably sized current limiting resistors in series with the LED connected from the 26pin SOURCE
+	pin output to 0Volt pin on the 26 pin connector for the 3 SOURCE pins & LEDS with current limiting resistors connected from the 26pin 12Vio supply to the SINK pin.
+	For External Button inputs a push button was connected from the 26pin 12Vio supply to a analogue input to simulate an external button.
+	For Analogue inputs a varaiable voltage was connected to one of the Analogue inputs simulating an external Analogue input.
+	The 2 User Buttons Button1 & Button2 on board the M2 hardware were used for selecting diferent functions. 
+	Enjoy the library & i hope it is of use to everyone.
+	Tony
 
 * Instance M2_12VIO::
 * Functions:
