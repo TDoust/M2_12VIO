@@ -10,7 +10,7 @@
 
 	Author:	Tony Doust
 	Date:	8/5/2017
-	Version: V1.0
+	Version: V0.0.1
 
 # Short description:
 	Macchina 2.0 has 6 General Purpose 12 volt outputs 3xSOURCE & 3xSINK Outputs & 6 x 12Volt Analogue Input Driver
