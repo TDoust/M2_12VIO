@@ -21,7 +21,9 @@
 *	Setpin_12VIO(4, OFF)		// turn output pin 4 OFF
 *	Setpin_12VIO(4, ON, SINK)	// sets output 4 to SINK 12 volts & turns output pin ON		"*** Macchina BETA Hardware ONLY ***"
 
-*	Setpin_12VIO(3, PWM, 75)	// set pin 3 to PWM with a 75% duty cycle
+*	Setpin_12VIO(3, ON, SINK, PWM_Pin, 100, 50)	// set pin 3 ON Sink mode PWM_Pin with a Frequency of 100Hz & a Duty cycle of 50%
+*   Change_Frequency_12VIO(1, 10)   // Change the Frequency of the PWM for the M2 I/O pin 1 (Maximum Frequency = 300,000Hz, 300KHz. Minimum Frequency = 2Hz)
+*   Change_Duty_12VIO(1, 50)    // Change the Duty of the PWM for the M2 I/O pin 1 (Maximum Duty = 99% Minimum Duty = 1%)
 *	Load_Amps()					// returns the total load currently being drawn from the M2 +12io line
                                 // if there has been a overload condition Load_Amps will return the load drawn at the time of the overload condition
 *	Supply_Volts()				// returns the battery volts of the vehicle the M2 is plugged into
@@ -32,6 +34,8 @@
 
 Private Functions
 *	Enable_12VIO_Monitor(ON)	// Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together (i.e. this can be considered as a Master ON/OFF switch)
+*   Frequency_12VIO(IO_Pin)     // Return the calculated Frequency
+*   Duty_12VIO(IO_Pin)          // Return the calculated Duty
 *
 *
 *	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -96,7 +100,7 @@ extern "C" {
     };
 
     enum Pwm_Mode{
-        PWM_PIN, PWM_ALT
+        PWM_OFF, PWM_PIN, PWM_ALT
     };
 
     enum Output_Pin{
@@ -180,9 +184,9 @@ class M2_12VIO{
 		/* *** Note This will Blow the main Fuse F1 *** Maximum 12Volt Current draw (Allowed) supplied through Q6 Mosfet */
 		#define Max_Current_M2 3.733            // mA The Maximum Design Current through Q6 Mosfet & measured across R18 by ICU2 for 12vio
 
-		#define ADCVREF 3.0                     // mV VCC Vref Voltage to processor for Analogue Calculations
-        #define Analog_Vref 3.0                 // Analogue Reference Voltage
-        #define Vehicle_Vref 3.0                // Vehicle Reference Voltage
+		#define ADCVREF 3.3                     // mV VCC Vref Voltage to processor for Analogue Calculations
+        #define Analog_Vref 3.3                 // Analogue Reference Voltage
+        #define Vehicle_Vref 3.3                // Vehicle Reference Voltage
 
         #define Design_Current 2.262            // mA  Design Maximum Current 2.262A for IC U2 ZXCT1109 for a 2.0V output across R25
 		#define Design_Volts 2.000				// mV Design Voltage output from U2 & Input to (I SENSE) Analogue Input for comparison
@@ -203,6 +207,16 @@ class M2_12VIO{
 		// **** Pin Description assignment needs to be checked **** //
 		#define	Voltage_Sense V_SENSE               // Analogue Input pin(92) ADC3 PA6X1_AD3 read the Vehicles 12Volt supply across voltage divider resistor network R34/R48 to the M2 from the Vehicle
 
+        // ************************************************************************************************************ //
+        //										        PWM Defines 													//
+        // ************************************************************************************************************ //
+        #define Max_Hz 1000                         // Maximum frequency in Hz = 1Khz = 60,000rpm. future revisions will increase this maximum value
+        #define Min_Hz 2                            // Minimum frequency we are able to achieve
+        #define Max_Duty 99                         // Maximum Duty cycle in %
+        #define Min_Duty 1                          // Minimum Duty cycle we are able to achiev
+        #define Hunderds_Micro_Seconds 100000000    // Number of Hundreds of microSeconds per Second
+
+
 		// ************************************************************************************************************ //
 		//										Error Number Defines													//
 		// ************************************************************************************************************ //
@@ -215,7 +229,8 @@ class M2_12VIO{
 		#define Err_Mode_Conflict 6	/* SOURCE or SINK previously set does not match current Operation*/
 		#define Err_Mode_ON 7	/* Pin already turned ON while trying to change Modes SOURCE to Sink or viceversa */
 		#define Err_Init 8	/* Pin mode has not been selected prior to turning ON or OFF */
-        #define Err_Duty_Range 9  /* Duty cycle not in range */
+        #define Err_Frequency_Range 9  /* Frequencye not in range */
+        #define Err_Duty_Range 10  /* Duty cycle not in range */
 
 
     public:
@@ -227,7 +242,9 @@ class M2_12VIO{
 		uint32_t Read_12VIO(uint32_t IO_Pin);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode);
-        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint8_t Duty);
+        uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint32_t Frequency, uint8_t Duty);
+        uint16_t Change_Frequency_12VIO(uint32_t IO_Pin, uint32_t Frequency);
+        uint16_t Change_Duty_12VIO(uint32_t IO_Pin, uint32_t Duty);
         uint16_t InitButton_12VIO(uint32_t IO_Pin);
         bool GetButton_12VIO(uint32_t IO_Pin);
 		float Temperature();
@@ -235,6 +252,8 @@ class M2_12VIO{
     private:
 
 		uint8_t Enable_12VIO_Monitor(uint8_t mode);
+        uint32_t Frequency_12VIO(uint32_t IO_Pin);
+        uint32_t Duty_12VIO(uint32_t IO_Pin);
 
 	}; // end M2 I/O Class Definition
 
@@ -242,7 +261,6 @@ extern int16_t Setpin_Error;
 extern volatile uint32_t M2_Amps;
 extern volatile bool Over_Current_Trip;
 extern void ISR_Over_Current();
-
 
 
 #ifdef __cplusplus

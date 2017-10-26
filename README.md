@@ -1,6 +1,6 @@
 # M2_12VIO Macchina M2 I/O Library
 
-# !!! WARNING too M2 Beta Hardware users !!!
+# !!! WARNING to M2 Beta Hardware users !!!
 	The only difference between the M2Beta version & the Production version hardware that this library interacts with are the 12VIO SINK pins.
 	It is recommended that the end user selects Macchina M2 in the boards manager & not Macchina M2 (Beta).
 	By selecting Macchina M2 in the Board Manager this will avoid possible damage to the hardware. 
@@ -10,7 +10,9 @@
 
 	Author:	Tony Doust
 	Date:	8/5/2017
-	Version: V0.0.1
+	Version: V0.1.1
+		Revision History
+			24/10/2017
 
 # Short description:
 	Macchina 2.0 has 6 General Purpose 12 volt outputs 3xSOURCE & 3xSINK Outputs & 6 x 12Volt Analogue Input Driver
@@ -30,19 +32,32 @@
 * Functions:
 *	Init_12VIO()	Initialise the 12VIO & the M2 I/O power supply current monitoring
 
-*	Setpin_12VIO(3, ON)	turn output pin 3 ON
+*	Setpin_12VIO(3, ON)	turn output pin 3 ON. This function will also turn ON the existing configured PWM pin if it has been enable for this pin.
 *	Setpin_12VIO(3, ON, SOURCE)
 sets output 3 to SOURCE 12 volts & turns the output pin ON.
 After setting the output pin the user can use Setpin_12VIO(3, OFF) to turn the output OFF or ON
 
-*	Setpin_12VIO(4, OFF)	turn output pin 4 OFF
+*	Setpin_12VIO(4, OFF)	turn output pin 4 OFF. This function will also turn off the PWM if it has been enable for this pin
 *	Setpin_12VIO(4, ON, SINK)
 sets output 4 to SINK 12 volts & turns the output pin ON.
 After setting the output pin the user can use Setpin_12VIO(4, OFF) to turn the output OFF or ON
 
-*	Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 50)
-set pin 1 ON as SOURCE & PWM the output with a 50% duty cycle & start the PWM.
-After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or On. (ON = restarting the PWM if configured as PWM with the previous duty cycle)
+*	Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50)
+set pin 1, ON, as 'SOURCE', & PWM_Pin mode, with a Frequency of 100Hz, & a Duty cycle of 50% duty & start the PWM for pin 1.
+After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output OFF or On,
+(ON = restarting the PWM if configured as PWM with the previous Frequency & Duty cycle that had been set when first calling the function)
+
+*	Setpin_12VIO(1, OFF, SOURCE, PWM_OFF, 100, 50)
+set pin '1', 'OFF', as 'SOURCE', & 'PWM_OFF' mode, with a Frequency of 100Hz, & a Duty cycle of 50% duty & start the PWM for pin 1.
+the settings above PWM_OFF Disables the PWM for this pin so we can revert back to using the pin as a normal digital pin
+
+*  Change_Frequency_12VIO(IO_Pin, Frequency)
+change the frequency of an already running PWM pin that has been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function.
+this function will adjust the existing duty to maintain the current duty that had been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function
+
+*  Change_Duty_12VIO(IO_Pin, Duty)
+change the Duty of an already running PWM pin that has been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function
+no changes will be made to the currently running frequency
 
 *	Load_Amps()
 returns the total load currently being drawn from the M2 +12io line.
@@ -66,6 +81,10 @@ reads the analogue pin as a button if ON or OFF
  *	Enable_12VIO_Monitor(ON)
  Turn ON or OFF (12Vio_EN pin) thus Enabling or Disabling All 12VIO Outputs together.
  (i.e. this can be considered as a Master ON/OFF switch)
+ *  Frequency_12VIO(IO_Pin)
+ Calculates the frequency from the variable stored for this I/O pin to be used in the PWM functions
+ *  Duty_12VIO(IO_Pin)
+ Calculates the Duty cycle from the variable stored for this I/O pin to be used in the PWM functions
 
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
