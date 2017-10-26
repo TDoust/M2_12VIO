@@ -883,7 +883,7 @@ enum Pwm_Mode
 uint16_t M2_12VIO::Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint32_t Frequency, uint8_t Duty){
     Setpin_Error = 0;
     if((IO_Pin > 0) && (IO_Pin <= 6)){	// Test if IO_Pin in range
-        if(Pin_Mode <= 1 || Source_Mode <= 1 || Pwm_Mode <= 1){	// Test if Mode is in range
+        if(Pin_Mode <= 1 || Source_Mode <= 1 || Pwm_Mode <= PWM_ALT){	// Test if Mode is in range
             if(Frequency >= Min_Hz && Frequency <= Max_Hz){    // Test if Frequency in range
                 if(Duty >= Min_Duty && Duty <= Max_Duty){    // Test if duty cycle in range
                     switch(Pwm_Mode){
