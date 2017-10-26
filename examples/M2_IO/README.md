@@ -63,7 +63,7 @@ After setting the pin the user can use Setpin_12VIO(1, OFF) to turn the output O
 (ON = restarting the PWM if configured as PWM with the previous Frequency & Duty cycle that had been set when first calling the function)
 
 *	Setpin_12VIO(1, OFF, SOURCE, PWM_OFF, 100, 50)
-set pin '1', 'OFF', as 'SOURCE', & 'PWM_OFF' mode, with a Frequency of 100Hz, & a Duty cycle of 50% duty & start the PWM for pin 1.
+set pin '1', 'OFF', as 'SOURCE', & 'PWM_OFF' mode, with a Frequency of 100Hz, & a Duty cycle of 50% duty & stop the PWM for pin 1.
 the settings above PWM_OFF Disables the PWM for this pin so we can revert back to using the pin as a normal digital pin
 
 *  Change_Frequency_12VIO(IO_Pin, Frequency)
