@@ -68,7 +68,7 @@ the settings above PWM_OFF Disables the PWM for this pin so we can revert back t
 
 *  Change_Frequency_12VIO(IO_Pin, Frequency)
 change the frequency of an already running PWM pin that has been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function.
-this function will adjust the existing duty to maintain the current duty that had been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function
+this function will automatically adjust the existing duty to maintain the current duty that had been set via the function Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50)
 
 *  Change_Duty_12VIO(IO_Pin, Duty)
 change the Duty of an already running PWM pin that has been set via the Setpin_12VIO(1, ON, SOURCE, PWM_PIN, 100, 50) function
