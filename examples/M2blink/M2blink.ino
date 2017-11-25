@@ -60,6 +60,41 @@ once you get above 30Hz you will not be able to distinguish the flasing of the L
 #include <M2_12VIO.h>
 
 
+#define Strobe_Leds // **** demonstrate Strobing of the LEDs along the side of the M2 **** //
+
+    // *** Uncomment the defines below to demonstrate the desired functions *** //
+//#define M2IO_Leds   // **** Uncomment to demonstrate LEDs with a series resistor connected to M2 I/O Pins incrementing to the next pin **** //
+//#define M2_PWM  // **** Uncomment to demonstrate setting up & using a GPIOx pin for PWM **** //  in this demo we are using pin GPIO1 with a series resistor connected LED
+
+#ifdef M2_PWM
+    #undef M2IO_Leds
+
+    #define M2_PWM_Change_Frequency     // **** Uncomment to demonstrate PWM change frequency **** //
+
+    #ifdef M2_PWM_Change_Frequency
+        #undef M2_PWM_Previous_Selected
+        #undef M2_PWM_Activate_Deactivate
+    #else
+
+        //#define M2_PWM_Previous_Selected    // **** Uncomment to demonstrate PWM how to Turn ON previously selected PWM **** //
+
+        #ifdef M2_PWM_Previous_Selected
+            #undef M2_PWM_Change_Frequency
+            #undef M2_PWM_Activate_Deactivate
+        #else
+
+            //#define M2_PWM_Activate_Deactivate   // **** Uncomment to demonstrate PWM how to Turn ON previously selected PWM & also Activate/DeActivate PWM **** //
+
+        #endif
+
+    #endif
+
+#else   /* M2_PWM has not been defined therfore ensure we disable all PWM functions & enable M2_Leds*/
+    #undef M2_PWM_Change_Frequency
+    #undef M2_PWM_Previous_Selected
+    #undef M2_PWM_Activate_Deactivate
+#endif
+
 
 M2_12VIO M2IO;	//Constructor for the M2_12Vio library
 
@@ -187,11 +222,11 @@ void Strobe(){	// non blocking strobe delay of LEDS
 }
 
 void Strobe_Off(){
-	digitalWrite(Led5, HIGH);    // turn the LED off by making the output HIGH
-	digitalWrite(Led4, HIGH);    // turn the LED off by making the output HIGH
-	digitalWrite(Led3, HIGH);    // turn the LED off by making the output HIGH
+	digitalWrite(Led5, HIGH);   // turn the LED off by making the output HIGH
+	digitalWrite(Led4, HIGH);   // turn the LED off by making the output HIGH
+	digitalWrite(Led3, HIGH);   // turn the LED off by making the output HIGH
 	digitalWrite(Led2, HIGH);   // turn the LED off by making the output HIGH
-	digitalWrite(Led1, HIGH);    // turn the LED off by making the output HIGH
+	digitalWrite(Led1, HIGH);   // turn the LED off by making the output HIGH
 }
 
 void Flash_Red_Led(){   // Flash the RED led
@@ -238,9 +273,9 @@ bool Button_Debounce(debounce_t *Button){
 }
 
 void setup() {
-	while(!Serial);
+    digitalWrite(PS_BUCK, HIGH);    // Turn ON the Interface Circuit - 12V to 5V DC-DC Converter (Interface Schematic Sht 4)
 	SerialUSB.begin(115200);
-	delay(2000);
+    delay(1000);
 	SerialUSB.print("\nSetup Started");
 
 
@@ -302,13 +337,14 @@ void setup() {
     M2_IO_Pin = 1;
     M2_Analog_Pin = 1;
 
-
-    M2IO.Setpin_12VIO(M2_IO_Pin, ON, SOURCE, PWM_PIN, Pwm_Frequency, Pwm_Duty);
-    Pwm_Active = true;
+    #ifdef M2_PWM
+        M2IO.Setpin_12VIO(M2_IO_Pin, ON, SOURCE, PWM_PIN, Pwm_Frequency, Pwm_Duty);
+        Pwm_Active = true;
+    #endif
 }
 
 void loop() {
-
+        // **** demonstrate Strobing of the LEDS along the side of the M2 **** //
 	if(!Over_Current_Trip){	// non blocking LED strobe delay
 		if((millis() - Strobe_endMillis) > Strobe_Delay){
 			Strobe_endMillis = millis();
@@ -350,9 +386,11 @@ void loop() {
 			if(Strobe_Led <= 0){
 				Strobe_Led = 10;
 			}
-			Strobe();
+        #ifdef Strobe_Leds
+            Strobe();
+        #endif
 		}
-	} else{	// Over_Current = TRUE Disable the strobing & flash the RED LED
+	} else{	// Over_Current = TRUE Disable the strobing & flash the RED LED. To Reset press Button 1
 		if(Over_Current_Display_Latch){
 			if((millis() - Flash_endMillis) > Flash_Delay){
 				Flash_endMillis = millis();
@@ -370,16 +408,18 @@ void loop() {
 			SerialUSB.print("\n**Over_Current Amps*** = ");
 			SerialUSB.print(Temp_Load);
             SerialUSB.print("mA");
-			Strobe_Off();
+        #ifdef Strobe_Leds
+            Strobe_Off();
+        #endif
             Over_Current_Display_Latch = true;
 		}
 	}
 
 	if(millis() - Dimming_endMillis > Dimming_Delay){	// RGB Leds Dimming
-		analogWrite(Led_RGB_Red, Brightness);	// set the brightness of RGB Blue Led pin: //
+            // **** demonstrate analogWrite to change fading Brightness of RGB Leds **** //
+        analogWrite(Led_RGB_Red, Brightness);	// set the brightness of RGB Blue Led pin: //
 		analogWrite(Led_RGB_Green, Brightness);	// set the brightness of RGB Blue Led pin: //
 		analogWrite(LED_RGB_Blue, Brightness);	// set the brightness of RGB Blue Led pin: //
-
 		if(Dimming_Up){
 			Brightness = Brightness + fadeAmount;	// change the brightness for next time through the loop: //
 		}else{
@@ -437,46 +477,40 @@ void loop() {
 		Button_Debounce(&M2_Button1);
 		M2_Button1.FlipFlop = !M2_Button1.FlipFlop;
 		if(M2_Button1.FlipFlop){	// True
-            // **** demonstrate PWM how to Turn ON previously selected PWM & also Deactivate PWM **** //
-            M2IO.Setpin_12VIO(M2_IO_Pin, ON, SOURCE, PWM_PIN, Pwm_Frequency, Pwm_Duty);
-            Pwm_Active = true;
-            // **** demonstrate PWM how to Turn ON previously selected PWM & also Deactivate PWM **** //
-
-            // **** demonstrate PWM how to Turn ON previously selected PWM **** //
-            /*
-            M2IO.Setpin_12VIO(M2_IO_Pin, ON);
-            */
-            // **** demonstrate PWM how to Turn ON previously selected PWM **** //
-
-            // **** demonstrate PWM change frequency **** //
-//            /*
-            if(Pwm_Active){
-                Pwm_Frequency = Pwm_Frequency - 10;
-                if(Pwm_Frequency <= 10){
-                    Pwm_Frequency = 10;
+            #ifdef M2_PWM
+                Pwm_Active = true;
+                #ifdef M2_PWM_Activate_Deactivate
+                    M2IO.Setpin_12VIO(M2_IO_Pin, ON, SOURCE, PWM_PIN, Pwm_Frequency, Pwm_Duty);
+                #endif
+                #ifdef M2_PWM_Previous_Selected
+                    M2IO.Setpin_12VIO(M2_IO_Pin, ON);
+                #endif
+                #ifdef M2_PWM_Change_Frequency
+                    if(Pwm_Active){
+                        Pwm_Frequency = Pwm_Frequency - 10;
+                        if(Pwm_Frequency <= 10){
+                            Pwm_Frequency = 10;
+                        }
+                        SerialUSB.print("\nPwm Frequency = ");
+                        SerialUSB.print(Pwm_Frequency);
+                        SerialUSB.print("Hz");
+                        M2IO.Change_Frequency_12VIO(M2_IO_Pin, Pwm_Frequency);
+                    }
+                #endif
+            #endif
+            #ifdef M2IO_Leds
+                if(Pin_Number > 6){
+                    Pin_Number = 0;
                 }
-                SerialUSB.print("\nPwm Frequency = ");
-                SerialUSB.print(Pwm_Frequency);
-                SerialUSB.print("Hz");
-                M2IO.Change_Frequency_12VIO(M2_IO_Pin, Pwm_Frequency);
-            }
-//            */
-            // **** demonstrate PWM change frequency **** //
-
-            // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-            /*
-            if(Pin_Number > 6){
-                Pin_Number = 0;
-            }
-            ++Pin_Number;   // Increment to the next output pin
-            */
-            // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-
+                ++Pin_Number;   // Increment to the next output pin
+            #endif
             SerialUSB.print("\nButton 1 ON");
 		} else{	//False
-            // **** demonstrate PWM how to Turn OFF previously selected PWM **** //
-            //M2IO.Setpin_12VIO(M2_IO_Pin, OFF);
-            // **** demonstrate PWM how to Turn OFF previously selected PWM **** //
+        #ifdef M2_PWM
+            #ifdef M2_PWM_Previous_Selected
+                M2IO.Setpin_12VIO(M2_IO_Pin, OFF);
+            #endif
+        #endif
             SerialUSB.print("\nButton 1 OFF");
         }
 	}
@@ -485,40 +519,36 @@ void loop() {
 		Button_Debounce(&M2_Button2);
 		M2_Button2.FlipFlop = !M2_Button2.FlipFlop;
 		if(M2_Button2.FlipFlop){
-            // **** demonstrate PWM change frequency **** //
-//            /*
-            if(Pwm_Active){
-                Pwm_Frequency = Pwm_Frequency + 10;
-                if(Pwm_Frequency > Max_Hz){
-                    Pwm_Frequency = Max_Hz;
-                }
-                SerialUSB.print("\nPwm Frequency = ");
-                SerialUSB.print(Pwm_Frequency);
-                SerialUSB.print("Hz");
-                M2IO.Change_Frequency_12VIO(M2_IO_Pin, Pwm_Frequency);
-            }
-//            */
-            // **** demonstrate PWM change frequency **** //
-
-            // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-           //M2IO.Setpin_12VIO(Pin_Number, ON);  // Turn the output ON. Used for demonstrating I/O Pins with LEDS connected to M2 I/O pins
-           // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-
+            #ifdef M2_PWM
+                Pwm_Active = true;
+                #ifdef  M2_PWM_Change_Frequency
+                    if(Pwm_Active){
+                        Pwm_Frequency = Pwm_Frequency + 10;
+                        if(Pwm_Frequency > Max_Hz){
+                            Pwm_Frequency = Max_Hz;
+                        }
+                        SerialUSB.print("\nPwm Frequency = ");
+                        SerialUSB.print(Pwm_Frequency);
+                        SerialUSB.print("Hz");
+                        M2IO.Change_Frequency_12VIO(M2_IO_Pin, Pwm_Frequency);
+                    }
+                #endif
+            #endif
+            #ifdef M2IO_Leds
+                M2IO.Setpin_12VIO(Pin_Number, ON);  // Turn the output ON. Used for demonstrating I/O Pins with LEDS connected to M2 I/O pins
+            #endif
             SerialUSB.print("\nButton 2 ON");
 		} else{
-            // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-            //M2IO.Setpin_12VIO(Pin_Number, OFF);  // Turn the output OFF. Used for demonstrating I/O Pins with LEDS connected to M2 I/O pins
-            // **** demonstrate LEDs connected to M2 I/O Pins incrementing to the next pin **** //
-
-            // **** demonstrate PWM how to Turn OFF previously selected PWM & also Deactivate PWM **** //
-            /*
-            M2IO.Setpin_12VIO(M2_IO_Pin, OFF, SOURCE, PWM_OFF, Pwm_Frequency, Pwm_Duty);
-            Pwm_Active = false;
-            */
-            // **** demonstrate PWM how to Turn ON previously selected PWM & also Deactivate PWM **** //
-
+            #ifdef M2IO_Leds
+                M2IO.Setpin_12VIO(Pin_Number, OFF);  // Turn the output OFF. Used for demonstrating I/O Pins with LEDS connected to M2 I/O pins
+            #endif
+            #ifdef M2_PWM
+                #ifdef M2_PWM_Activate_Deactivate
+                M2IO.Setpin_12VIO(M2_IO_Pin, OFF, SOURCE, PWM_OFF, Pwm_Frequency, Pwm_Duty);
+                #endif
+                Pwm_Active = false;
+            #endif
             SerialUSB.print("\nButton 2 OFF");
 		}
 	}
-
 }
