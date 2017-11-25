@@ -1,4 +1,4 @@
-/*
+﻿/*
 *  M2_12VIO.h for Macchina M2
 *
 *	Author:	Tony Doust
@@ -80,14 +80,24 @@ Private Functions
 *
 */
 
+
 #include <stdint.h>
 #include "M2_12VIO.h"
-#include <pwm_lib.h>    // down this library from https://github.com/antodom/pwm_lib
-                        // or down load from a forked copy of the above https://github.com/TDoust/pwm_lib
+
+// define to enable the use of the analogue DMA functions in M2RET
+//#define _M2RET_ANALOGUE // (!!! else comment out !!!)
+
+
+#ifdef _M2RET_ANALOGUE
+    extern uint16_t getAnalog(uint8_t which);
+#else
+    #undef _M2RET_ANALOGUE
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 // ************************************************************************************************************ //
 //												Analogue Setup													//
@@ -171,12 +181,6 @@ uint16_t Analog_Bit_Table[7];
 // ************************************************************************************************************ //
 using namespace arduino_due::pwm_lib;
 
-#define PWM_PERIOD_GPIO1 100000 // 1000 msecs in hundredth of usecs (1e-8 secs)
-#define PWM_DUTY_GPIO1 1000     // 10 usecs in hundredth of usecs (1e-8 secs)
-
-#define PWM_PERIOD_GPIO2 2000000    // 20 msecs in hundredth of usecs (1e-8 secs)
-#define PWM_DUTY_GPIO2 100000       // 1000 msecs in hundredth of usecs (1e-8 secs)
-
 pwm<pwm_pin::PWMH0_PC3> pwm_GPIO1;
 pwm<pwm_pin::PWMH1_PC5> pwm_GPIO2;
 pwm<pwm_pin::PWMH2_PC7> pwm_GPIO3;
@@ -204,7 +208,16 @@ pwm<pwm_pin::PWMH5_PC19> pwm_GPIO6;
 \return NIL
 */
 void ISR_Over_Current(){	// handle pin change interrupt for PIO_PD1 Over Current Input from LM393 Comparator here
+#ifndef _M2RET_ANALOGUE
+
     Over_Current_Analogue_Bits = adc_get_channel_value(ADC, adc_channel_num_t (g_APinDescription[Supply_Amps].ulADCChannelNumber));	/* Read the Analogue Bits from the I_Sense Pin for later amps calculation */
+
+#else
+
+    Over_Current_Analogue_Bits = getAnalog(7U);
+
+#endif
+
     digitalWrite(IO_Enable, LOW);   // There appears to have been an OverCurrent condition therfore we Turn the 12Vio_EN pin OFF Disablng all 12Vio output pins
 	Over_Current_Trip = true;       // Set the flag to indicate an OverCurrent condition has occured
 	Overload_Latch = true;
@@ -270,8 +283,11 @@ uint16_t M2_12VIO::Init_12VIO(){
 
     ADC->ADC_CHER = 1 << 15u;	// Enable the Analogue Temperature channel AD15
 
+
     // Setup the software defaults used in analogRead() to 12 bit resolution
     analogReference(AR_DEFAULT);    // this set the default analogue reference voltage
+
+#ifndef _M2RET_ANALOGUE   // usig M2IO with M2RET therfore we use the DMA analogue routines in M2RET
 
     Analog_Resolution = ADC->ADC_MR & 0x10; // Check is processor is set for Hardware 10 or 12 bit resolution 1=10bit 0=12bit (Default = 12bit)
     if(Analog_Resolution == 1){
@@ -285,6 +301,8 @@ uint16_t M2_12VIO::Init_12VIO(){
         Max_Number_Analogue_Bits = 4096;	//  **Dont Change** Hardware Analogue Resolution Bit range 12 bits  //
     }
 
+#endif
+
     Amps_Scaler = round(((((ADCVREF*1000) / Max_Number_Analogue_Bits) * (Design_Volts * 1000)) / (Design_Current * 1000)) * 65536);
     //  3300 / 4096 = 0.8056640625 * 2000 = 1611.328125 / 2262 = 0.712346651193634 * 65536 = 46684.35013262599
 
@@ -297,18 +315,30 @@ uint16_t M2_12VIO::Init_12VIO(){
     // Once these values have been obtained & inserted into the appropriate places in the Calibrated_xx_xx_Scaler variable,
     // Comment out the UnCalibrated_xx_xx_Scaler Return statement in the function & Uncomment the Calibrated_xx_xx_Scaler Return statement.
     // Then recompile & upload to the M2
-    // The Values in the Calibrated_xx_xx_Scaler variables below should be accurate enough for most users.
+    // !!! The Values in the Calibrated_xx_xx_Scaler variables below should be accurate enough for most users. !!!
     // **************************************************************************************************************** //
 
     Supply_Offset = 230;   // Millivolts drop accross D1 & Q1 Source Drain junction
+#ifdef _M2RET_ANALOGUE
+    UnCalibrated_Vehicle_Volts_Scaler = round(((Max_Vehicle_Volts - Vehicle_Vref) / Vehicle_Vref) * 65536);
+    // (16.63 - 3.3) / 3.3 = 4.039393939393939 * 65536 = 264725.7212121212
+#else
     UnCalibrated_Vehicle_Volts_Scaler = round((((Max_Vehicle_Volts - Vehicle_Vref) / Vehicle_Vref) * 65536) / Number_Analog_Samples);
     // (16.63 - 3.3) / 3.3 = 4.039393939393939 * 65536 = 264725.7212121212
-    Calibrated_Vehicle_Volts_Scaler = round(((((10.13 * 1000) - Supply_Offset) / 1000) / 8.81) * UnCalibrated_Vehicle_Volts_Scaler);
+#endif
+    Calibrated_Vehicle_Volts_Scaler = round(((((13.80 * 1000) - Supply_Offset) / 1000) / 12.16) * UnCalibrated_Vehicle_Volts_Scaler);
     // Calibrated_Vehicle_Volts_Scaler = ((((Measured Value * 1000) - Supply_Offset) / 1000) / Displayed Value) * UnCalibrated_Vehicle_Volts_Scaler
 
+
+#ifdef _M2RET_ANALOGUE
+    UnCalibrated_Analog_IO_Scaler = round(((Max_Analog_Volts - Analog_Vref) / Analog_Vref) * 65536);
+    // (16.63 - 3.3) / 3.3 = 4.039393939393939 * 65536 = 264725.7212121212 / 16 = 16545.35757575758
+#else
     UnCalibrated_Analog_IO_Scaler = round((((Max_Analog_Volts - Analog_Vref) / Analog_Vref) * 65536) / Number_Analog_Samples);
     // (16.63 - 3.3) / 3.3 = 4.039393939393939 * 65536 = 264725.7212121212 / 16 = 16545.35757575758
-    Calibrated_Analog_IO_Scaler = round((9.90 / 8.81) * UnCalibrated_Analog_IO_Scaler);
+#endif
+    Calibrated_Analog_IO_Scaler = round((14.07 / 12.57) * UnCalibrated_Analog_IO_Scaler);
+    //Calibrated_Analog_IO_Scaler = round((9.90 / 8.81) * UnCalibrated_Analog_IO_Scaler);
     // Calibrated_Analog_IO_Scaler = round((Measured Value / Displayed Value) * UnCalibrated_Analog_IO_Scaler);
 
     //******************************************************************************************************//
@@ -322,22 +352,29 @@ uint16_t M2_12VIO::Init_12VIO(){
 
     digitalWrite(IO_Enable, HIGH);	// Turn the 12Vio_EN pin ON to enable calculating the Supply_Offset voltage for the current sensing (LOW = OFF HIGH = ON)
     delay(10);
+
+    //SerialUSB.print("\nSupply Offset =");
+#ifdef _M2RET_ANALOGUE
+    Analog_Bit_Table[0] = getAnalog(7);   // Get the I_SENSE analogue value from the M2RET analogue buffer
+#else
     ADC->ADC_CR = 0x2;      // set ADC_CR bit 1 Start the ADC Conversion.
     delay(10);  // delay to allow the processor analogue circuitry to settle
     M2_Amps = adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Supply_Amps].ulADCChannelNumber)); // Do dummy read to get around a DUE BUG
     M2_Amps = 0;
 
-    //SerialUSB.print("\nSuppl Offset =");
     for(uint8_t i = 0; i < 16; ++i){ // Calculate the standing current (idle no load current output of U2) & store in Analog_Bit_Table[0] for use in calculating the 6 output current limits
         ADC->ADC_CR = 0x2;      // set ADC_CR bit 1 Start the ADC Conversion.
         delay(10);  // delay to allow the processor analogue circuitry to settle
         while((ADC->ADC_ISR & (1 << g_APinDescription[Supply_Amps].ulADCChannelNumber)) == 0);  // Wait for end of analogue conversion
-        M2_Amps = M2_Amps + adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Supply_Amps].ulADCChannelNumber)); // Read the standing voltage output from U2 with no load
-        //SerialUSB.print(" ");
-        //SerialUSB.print(M2_Amps);
+        M2_Amps = adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Supply_Amps].ulADCChannelNumber)); // Read the standing voltage output from U2 with no load
     }
-    digitalWrite(IO_Enable, LOW);       // Turn the 12Vio_EN pin OFF to finish setting up the current limiting (LOW = OFF HIGH = ON)
+
     Analog_Bit_Table[0] = M2_Amps >> 4; // Right shift 4 place i.e. divide by 16
+#endif
+    //SerialUSB.print(" ");
+    //SerialUSB.print(Analog_Bit_Table[0]);
+
+    digitalWrite(IO_Enable, LOW);       // Turn the 12Vio_EN pin OFF to finish setting up the current limiting (LOW = OFF HIGH = ON)
     M2_Amps = 0;
 
     for(uint8_t i = 1; i <= 6; i++){ // (((Design_Current * 1000) - (((Design_Current * 1000) / "2730 bits calculated (Analog_Bit_Table[0] + (Analog_Bit_Table[1] * 6)"  maximum bits for the design current) * Analog_Bit_Table[0]bits)) / 6)  each output pin = 411 bits = 266.2236083986747 mA
@@ -368,7 +405,32 @@ uint16_t M2_12VIO::Init_12VIO(){
 	//******************************************************************************************************//
 	//									Current Sense Monitoring for U2 & U3A								//
 	//******************************************************************************************************//
-
+    /*
+    44.6.6 Sleep Mode
+    The DACC Sleep Mode maximizes power saving by automatically deactivating the DACC when it is not being used
+    for conversions.
+    When a start conversion request occurs, the DACC is automatically activated. As the analog cell requires a startup
+    time, the logic waits during this time and starts the conversion on the selected channel. When all conversion
+    requests are complete, the DACC is deactivated until the next request for conversion.
+    A fast wake-up mode is available in the DACC Mode Register as a compromise between power saving strategy
+    and responsiveness. Setting the FASTW bit to 1 enables the fast wake-up mode. In fast wake-up mode the DACC
+    is not fully deactivated while no conversion is requested, thereby providing less power saving but faster wake-up (4
+    times faster).
+    44.6.7 DACC Timings
+    The DACC startup time must be defined by the user in the STARTUP field of the DACC Mode Register.
+    This startup time differs depending of the use of the fast wake-up mode along with sleep mode, in this case the
+    user must set the STARTUP time corresponding to the fast wake up and not the standard startup time.
+    A max speed mode is available by setting the MAXS bit to 1 in the DACC_MR register. Using this mode, the DAC
+    Controller no longer waits to sample the end of cycle signal coming from the DACC block to start the next
+    conversion and uses an internal counter instead. This mode gains 2 DACC Clock periods between each
+    consecutive conversion.
+    Warning: Using this mode, the EOC interrupt of the DACC_IER register should not be used as it is 2 DACC Clock
+    periods late.
+    After 20 μs the analog voltage resulting from the converted data will start decreasing, therefore it is necessary to
+    refresh the channel on a regular basis to prevent this voltage loss. This is the purpose of the REFRESH field in the
+    DACC Mode Register where the user will define the period for the analog channels to be refreshed.
+    Warning: A REFRESH PERIOD field set to 0 will disable the refresh function of the DACC channels.
+    */
     pinMode(Interupt_Over_Current, INPUT_PULLUP);		/* Set OverCurrent to Input & enable pullup resistors. Used for Interupt Input using Pinchange Interupt */
 
 
@@ -382,9 +444,12 @@ uint16_t M2_12VIO::Init_12VIO(){
 
     Reset_Current_Limit();  // Turn on current monitoring
 
+#ifndef _M2RET_ANALOGUE
+        // Start the ADC Conversion process
     ADC->ADC_MR |= 0x80;    // set ADC_MR bit 7 FREERUN ADC to free running
     ADC->ADC_CR |= 0x2;     // set ADC_CR bit 1 Start the ADC Conversion.
 
+#endif
 	return(Setpin_Error);
 }
 
@@ -419,6 +484,7 @@ uint32_t M2_12VIO::Load_Amps(){
 		Overload_Latch = false;
         M2_Amps = Over_Current_Analogue_Bits;	// M2_Amps calculated prior to Over_Current shutdown  in mAmps
 	} else{	// read from the analogue pin
+#ifndef _M2RET_ANALOGUE
         M2_Amps = adc_get_channel_value (ADC, adc_channel_num_t (g_APinDescription[Supply_Amps].ulADCChannelNumber)); // Do dummy read to get around the DUE BUG
         M2_Amps = 0;
         for(uint8_t i = 0; i < 16; i++){
@@ -426,8 +492,10 @@ uint32_t M2_12VIO::Load_Amps(){
             M2_Amps = M2_Amps + adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Supply_Amps].ulADCChannelNumber));
         }
         M2_Amps = M2_Amps >> 4; // Divide the results by 16
+#else
+        M2_Amps = getAnalog(7);
+#endif
     }
-
     if(M2_Amps <= Analog_Bit_Table[0]){ // Should never really be less than the standing no load current calculated in setup
         M2_Amps = Analog_Bit_Table[0];
     }
@@ -441,10 +509,27 @@ uint32_t M2_12VIO::Load_Amps(){
 *	
 *\param NIL
 *\return uint32_t Scaled Supply Voltage in milliVolts i.e. 1620
+*		!!! Note !!!
+*       To use this function & get correct results you will need to remove the Zener diode D2
+*       from the underside of your Macchina M2 processor board.
+*       DONT! attempt this if you are not confident in using a soldering iron.
 */
 uint32_t M2_12VIO::Supply_Volts(){
-	uint32_t Temp = 0;
+    //TODO Detect change in vehicle Voltage Sleep & Wakeup
 
+    /* If we want to detect a change in vehicle voltage to say go to SLEEP or WAKE up
+        43.6.7 Comparison Window
+    The ADC Controller features automatic comparison functions. It compares converted values to a low threshold or a
+    high threshold or both, according to the CMPMODE function chosen in the Extended Mode Register (ADC_EMR).
+    The comparison can be done on all channels or only on the channel specified in CMPSEL field of ADC_EMR. To
+    compare all channels the CMP_ALL parameter of ADC_EMR should be set.
+    Moreover a filtering option can be set by writing the number of consecutive comparison errors needed to raise the
+    flag. This number can be written and read in the CMPFILTER field of ADC_EMR.
+    The flag can be read on the COMPE bit of the Interrupt Status Register (ADC_ISR) and can trigger an interrupt.
+    The High Threshold and the Low Threshold can be read/write in the Comparison Window Register (ADC_CWR).
+    */
+	uint32_t Temp = 0;
+#ifndef _M2RET_ANALOGUE
     Temp = adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Voltage_Sense].ulADCChannelNumber)); // Do dummy read to get around the DUE BUG
     Temp = 0;
     for(uint8_t i = 0; i < Number_Analog_Samples; i++){
@@ -452,7 +537,12 @@ uint32_t M2_12VIO::Supply_Volts(){
         Temp = Temp + adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Voltage_Sense].ulADCChannelNumber));
     }
     //return((Temp * UnCalibrated_Vehicle_Volts_Scaler) >> 16); // uncomment & comment the below line to carry out calibrarion, refer to Calibration section above.
-    return(((Temp * Calibrated_Vehicle_Volts_Scaler)>>16) + Supply_Offset);
+    return(((Temp * Calibrated_Vehicle_Volts_Scaler) >> 16) + Supply_Offset);
+#else
+    Temp = getAnalog(6);
+    //return((Temp * UnCalibrated_Vehicle_Volts_Scaler) >> 16); // uncomment & comment the below line to carry out calibrarion, refer to Calibration section above.
+    return(((Temp * Calibrated_Vehicle_Volts_Scaler) >> 16) + Supply_Offset);
+#endif
 }
 
 
@@ -464,18 +554,22 @@ uint32_t M2_12VIO::Supply_Volts(){
 *
 *\return uint32_t Scaled Analogue Value in milliVolts i.e. 1620
 */
-uint32_t M2_12VIO::Read_12VIO(uint32_t IO_Pin){
+uint16_t M2_12VIO::Read_12VIO(uint8_t IO_Pin){
     uint32_t Temp = 0;
 
     if((IO_Pin > 0) && (IO_Pin <= 6)){
+#ifndef _M2RET_ANALOGUE
         Temp = adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Analog_Pin[IO_Pin - 1]].ulADCChannelNumber)); // Do dummy read to get around the DUE BUG
         Temp = 0;
         for(uint8_t i = 0; i < Number_Analog_Samples; i++){
             while((ADC->ADC_ISR & (1 << g_APinDescription[Analog_Pin[IO_Pin - 1]].ulADCChannelNumber)) == 0);  // Wait for end of analogue conversion
             Temp = Temp + adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Analog_Pin[IO_Pin - 1]].ulADCChannelNumber));
         }
+#else
+        Temp = getAnalog(IO_Pin - 1);
+#endif
         //return((Temp * UnCalibrated_Analog_IO_Scaler) >> 16); // uncomment & comment the below line to carry out calibrarion, refer to Calibration section above.
-        return((Temp * Calibrated_Analog_IO_Scaler)>>16);
+        return((Temp * Calibrated_Analog_IO_Scaler) >> 16);
     }
     return(0);
 }
@@ -1084,24 +1178,29 @@ uint16_t M2_12VIO::InitButton_12VIO(uint32_t IO_Pin){
 *
 \return bool TRUE or FALSE (TRUE = input pin ON) (FALSE = input pin OFF)
 */
-bool M2_12VIO::GetButton_12VIO(uint32_t IO_Pin){
-    bool Return_Event = false;
+uint8_t M2_12VIO::GetButton_12VIO(uint32_t IO_Pin){
+    uint8_t Return_Event = 0;
     if((IO_Pin > 0) && (IO_Pin <= 6)){
-        uint32_t Temp = 0;
-        uint32_t Threshold = 200;
+        uint16_t Temp = 0;
+        uint16_t Threshold = 200;
+
+    #ifdef _M2RET_ANALOGUE
+        Temp = getAnalog(IO_Pin - 1);
+    #else
         while((ADC->ADC_ISR & (1 << g_APinDescription[Analog_Pin[IO_Pin - 1]].ulADCChannelNumber)) == 0);  // Wait for end of analogue conversion
         Temp =  adc_get_channel_value(ADC, adc_channel_num_t(g_APinDescription[Analog_Pin[IO_Pin - 1]].ulADCChannelNumber));
+    #endif
 
         if(Max_Number_Analogue_Bits == 4095){   // Threshold values are the minimum for a 5 Volt input on the analogue pin
-            Threshold = 1000;
+            Threshold = 1000;   // 12 bit resolution
         } else{
-            Threshold = 200;
+            Threshold = 200;    // 10 bit resolution
         }
 
         if(Temp >= Threshold){
-            Return_Event = true;
+            Return_Event = 1;
         } else{
-            Return_Event = false;
+            Return_Event = 0;
         }
     }
     return(Return_Event);
@@ -1122,16 +1221,88 @@ float M2_12VIO::Temperature(){
     float OutputVoltage = 0.8;
     float Sensitivity = 0.00265;
 	unsigned int Fixed_Temperature = 27;
+
+#ifndef _M2RET_ANALOGUE
     Processor_Temp = adc_get_channel_value(ADC, ADC_TEMPERATURE_SENSOR); // do a dummy read first incase the temperature has not been read in some time to get around the DUE BUG
     Processor_Temp = 0;
 
     while((ADC->ADC_ISR & (1 << ADC_TEMPERATURE_SENSOR)) == 0);	// Wait for end of analogue conversion of temperature sensor
     Processor_Temp = Fixed_Temperature + (((Temperature_Scaler * adc_get_channel_value(ADC, ADC_TEMPERATURE_SENSOR)) - OutputVoltage) / Sensitivity);	// Read the value
+#else
+    Processor_Temp = Fixed_Temperature + (((Temperature_Scaler * getAnalog(8)) - OutputVoltage) / Sensitivity);	// Read the value
+#endif
 	return(Processor_Temp);
 }
 
 
-    // **** Private Functions **** //
+/*
+Lower Power Modes
+    **Backup Mode
+        The purpose of backup mode is to achieve the lowest power consumption possible in a system which is performing
+        periodic wake-ups to perform tasks but not requiring fast startup time (< 0.5 ms).
+        Current consumption is 2.5 μA typical on VDDBU
+            !!Wakeup
+                The SAM3X/A series can be awakened from this mode through the Force Wake-up pin (FWUP), and Wake-up
+                input pins WKUP0–15, Supply Monitor, RTT or RTC wake-up event.
+
+                Exit from Backup mode happens if one of the following enable wake-up events occurs:
+                . Low level, configurable debouncing on FWUP pin
+                . Level transition, configurable debouncing on pins WKUPEN0–15
+                . SM alarm
+                . RTC alarm
+                . RTT alarm
+    **Wait Mode
+        The purpose of the wait mode is to achieve very low power consumption while maintaining the whole device in a
+        powered state for a startup time of less than 10 μs.
+        Current consumption in Wait mode is typically 23 μA for total current consumption if the internal voltage regulator
+        is used or 15 μA if an external regulator is used.
+            !!Wakeup
+                The Cortex-M3 is able to handle external events or internal events in order to wake-up the core (WFE). This is
+                done by configuring the external lines WKUP0–15 as fast startup wake-up pins (refer to Section 5.8 “Fast
+                Startup”). RTC or RTT Alarm and USB wake-up events can be used to wake up the CPU (exit from WFE).
+    **Sleep Mode
+        The purpose of sleep mode is to optimize power consumption of the device versus response time. In this mode,
+        only the core clock is stopped. The peripheral clocks can be enabled
+            !!Wakeup
+                The processor can be awakened from an interrupt if WFI instruction of the Cortex-M3 is used,
+                or from an event if the WFE instruction is used to enter this mode.
+
+                
+This Section Deals withcomparing ADC value against a known value use this for determining from vehicle voltage sleep & wake up 
+43.6.7 Comparison Window
+    The ADC Controller features automatic comparison functions. It compares converted values to a low threshold or a
+    high threshold or both, according to the CMPMODE function chosen in the Extended Mode Register (ADC_EMR).
+    The comparison can be done on all channels or only on the channel specified in CMPSEL field of ADC_EMR. To
+    compare all channels the CMP_ALL parameter of ADC_EMR should be set.
+    Moreover a filtering option can be set by writing the number of consecutive comparison errors needed to raise the
+    flag. This number can be written and read in the CMPFILTER field of ADC_EMR.
+    The flag can be read on the COMPE bit of the Interrupt Status Register (ADC_ISR) and can trigger an interrupt.
+    The High Threshold and the Low Threshold can be read/write in the Comparison Window Register (ADC_CWR).
+                
+*/
+uint16_t M2_12VIO::Sleep(uint8_t Sleep_Mode){
+    if(Sleep_Mode > 3){
+        return(Err_Sleep);
+    }
+#ifndef _M2RET_ANALOGUE
+    /*Configures ADC power saving mode.
+        adc_configure_power_save(Adc * p_adc, const uint8_t uc_sleep, const uint8_t uc_fwup);
+
+    Parameters
+    p_adc	Pointer to an ADC instance.
+    uc_sleep	ADC_MR_SLEEP_NORMAL keeps the ADC Core and reference voltage circuitry ON between conversions. ADC_MR_SLEEP_SLEEP keeps the ADC Core and reference voltage circuitry OFF between conversions.
+    uc_fwup	ADC_MR_FWUP_OFF configures sleep mode as uc_sleep setting, ADC_MR_FWUP_ON keeps voltage reference ON and ADC Core OFF between conversions.
+    */
+    adc_configure_power_save(ADC,
+        ADC_MR_SLEEP_SLEEP, // ADC_MR_SLEEP_NORMAL, ADC_MR_SLEEP_SLEEP
+        ADC_MR_FWUP_OFF     // ADC_MR_FWUP_OFF, ADC_MR_FWUP_ON
+    );
+#endif
+    return(0);
+}
+
+
+// **** Private Functions **** //
 /**
 *\brief
 *	Turn (ON or OFF) the 12Vio_EN pin thus Enabling or Disabling all 12Vio output pins simultanously
@@ -1165,7 +1336,6 @@ uint8_t M2_12VIO::Enable_12VIO_Monitor(uint8_t mode){
 */
 uint32_t M2_12VIO::Frequency_12VIO(uint32_t IO_Pin){
     return(Hunderds_Micro_Seconds / M2_Pin[IO_Pin - 1][5]);
-    // 100000000 / 60000 = 1666.666666666667
 }
 
 
@@ -1178,7 +1348,32 @@ uint32_t M2_12VIO::Frequency_12VIO(uint32_t IO_Pin){
 */
 uint32_t M2_12VIO::Duty_12VIO(uint32_t IO_Pin){
     return(((Hunderds_Micro_Seconds / M2_Pin[IO_Pin - 1][5]) / 100) * M2_Pin[IO_Pin - 1][6]);
-    //  (((100000000 / 60000) = 1666.666666666667  / 100 ) = 16.66666666666667 * 50) = 833.3333333333333
+}
+
+
+/*
+*\brief
+*   Used in M2 Interface Sleep Wakeup Function
+*	    Turns the power for the Interface circuitry ON or OFF
+*
+*\param Power_12VIO(bool OnOff_Mode)
+*\return nil
+*/
+void M2_12VIO::Power_12VIO(bool OnOff_Mode){
+    /* The product can be used with or without backup batteries, or more generally a backup supply. When a backup
+        supply is used (See Figure 16-2), only VDDBU voltage is present in Backup mode and no other external supply is
+        applied on the chip. In this case the user needs to clear VDDIORDY bit in the Supply Controller Mode Register
+        (SUPC_MR) at least two slow clock periods before VDDIO voltage is removed. When waking up from Backup
+        mode, the programmer needs to set VDDIORDY.
+    */ 
+        // Interface Circuit - 12V to 5V DC-DC Converter (Interface Schematic Page )
+    digitalWrite(PS_BUCK, OnOff_Mode);          // Turn ON or OFF the Interface Circuit - 12V to 5V DC-DC Converter (Interface Schematic Sht 4)
+        // J1850 ISO9141 CAN Circuit - Low Power Control Circuit
+    //digitalWrite(PS_J1850_9141, OnOff_Mode);    // Turn ON or OFF the J1850 ISO9141 CAN Circuit - Low Power Control Circuit (Interface Schematic Sht 6)
+    digitalWrite(LIN_KSLP, OnOff_Mode);         // Turn ON or OFF the J1850 ISO9141 CAN Circuit - LIN Interface Circuit (Interface Schematic Sht 17)
+    digitalWrite(LIN_LSLP, OnOff_Mode);         // Turn ON or OFF the J1850 ISO9141 CAN Circuit - LIN Interface Circuit (Interface Schematic Sht 18)
+        // 12V IO Circuit - Current Sense Circuit
+    M2_12VIO::Enable_12VIO_Monitor(OnOff_Mode); // Turn ON or OFF the 12V IO Circuit - Current Sense Circuit (Interface Schematic Sht 7)
 }
 
 
