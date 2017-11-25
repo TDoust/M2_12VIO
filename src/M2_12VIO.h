@@ -85,10 +85,20 @@ Private Functions
 #include <Arduino.h>
 #include <pins_arduino.h>
 #include <stdint.h>
+#include <pwm_lib.h>    // down load this library from https://github.com/antodom/pwm_lib
+#include <pwm_defs.h>   // or down load from a forked copy of the above https://github.com/TDoust/pwm_lib
+
+#ifdef GVRET_H_     // Using M2_12VIO with M2RET
+    #define _M2RET_ANALOGUE // define this to enable the use of the analogue DMA functions in M2RET
+    extern uint16_t getAnalog(uint8_t which);
+#else
+    #undef _M2RET_ANALOGUE
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 
     enum Pin_Mode{
@@ -171,7 +181,6 @@ extern "C" {
 #define Cpu_Temp_Pin CPU_TEMP	// Processor Chip Temperature
 
 
-
 	// M2 I/O Class Definition
 class M2_12VIO{
     private:
@@ -231,22 +240,24 @@ class M2_12VIO{
 		#define Err_Init 8	/* Pin mode has not been selected prior to turning ON or OFF */
         #define Err_Frequency_Range 9  /* Frequencye not in range */
         #define Err_Duty_Range 10  /* Duty cycle not in range */
+        #define Err_Sleep 11    /* Sleep Mode not in range */
 
 
     public:
 
 		uint16_t Init_12VIO();
 		uint16_t Reset_Current_Limit();
+        uint16_t Sleep(uint8_t Sleep_Mode);
 		uint32_t Load_Amps();
 		uint32_t Supply_Volts();
-		uint32_t Read_12VIO(uint32_t IO_Pin);
+		uint16_t Read_12VIO(uint8_t IO_Pin);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode);
         uint16_t Setpin_12VIO(uint32_t IO_Pin, uint8_t Pin_Mode, uint8_t Source_Mode, uint8_t Pwm_Mode, uint32_t Frequency, uint8_t Duty);
         uint16_t Change_Frequency_12VIO(uint32_t IO_Pin, uint32_t Frequency);
         uint16_t Change_Duty_12VIO(uint32_t IO_Pin, uint32_t Duty);
         uint16_t InitButton_12VIO(uint32_t IO_Pin);
-        bool GetButton_12VIO(uint32_t IO_Pin);
+        uint8_t GetButton_12VIO(uint32_t IO_Pin);
 		float Temperature();
 
     private:
@@ -254,6 +265,7 @@ class M2_12VIO{
 		uint8_t Enable_12VIO_Monitor(uint8_t mode);
         uint32_t Frequency_12VIO(uint32_t IO_Pin);
         uint32_t Duty_12VIO(uint32_t IO_Pin);
+        void Power_12VIO(bool OnOff_Mode);
 
 	}; // end M2 I/O Class Definition
 
