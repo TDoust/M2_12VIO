@@ -467,6 +467,16 @@ uint16_t M2_12VIO::Reset_Current_Limit(){
 	return(M2_12VIO::Enable_12VIO_Monitor(ON));
 }
 
+/**
+* \brief
+*	Disable the Current Trip Intterupt, prevents the output from being disabled due to faults or transients
+*	WARNING, you will only have the (relatively) slow PTC fuse to protect your outputs
+* \param NIL
+* \return void
+*/
+uint16_t M2_12VIO::Disable_Current_Trip(){
+	detachInterrupt(digitalPinToInterrupt(Interupt_Over_Current));
+}
 
 /*
 *\brief
