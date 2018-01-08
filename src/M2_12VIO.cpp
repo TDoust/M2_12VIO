@@ -469,7 +469,7 @@ uint16_t M2_12VIO::Reset_Current_Limit(){
 
 /**
 * \brief
-*	Disable the Current Trip Intterupt, prevents the output from being disabled due to faults or transients
+*	Disable the Current Trip Interrupt, prevents the output from being disabled due to faults or transients
 *	WARNING, you will only have the (relatively) slow PTC fuse to protect your outputs
 * \param NIL
 * \return void
