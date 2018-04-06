@@ -69,9 +69,7 @@ returns the battery volts of the vehicle the M2 is plugged into
 
 *	Read_12VIO(IO_Pin) reads the Analogue pin & returns the scaled value as mVolts
 
-*	InitButton_12VIO(IO_Pin)
 
-Initialise the Analog_Pin as a pseduo digital input
 *	GetButton_12VIO(IO_Pin) reads the analogue pin as a button if ON or OFF
 
 *	Temperature() returns the internal temperature of the SAM DUE processor chip
