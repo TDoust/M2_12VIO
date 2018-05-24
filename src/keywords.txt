@@ -12,6 +12,7 @@
 #######################################
 Init_12VIO()	 KEYWORD2
 Reset_Current_Limit()	KEYWORD2
+Disable_Current_Trip()	KEYWORD2
 Load_Amps()	 KEYWORD2
 Supply_Volts()	 KEYWORD2
 Read_12VIO(IO_Pin)	 KEYWORD2

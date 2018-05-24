@@ -247,6 +247,7 @@ class M2_12VIO{
 
 		uint16_t Init_12VIO();
 		uint16_t Reset_Current_Limit();
+		void Disable_Current_Trip();
         uint16_t Sleep(uint8_t Sleep_Mode);
 		uint32_t Load_Amps();
 		uint32_t Supply_Volts();
